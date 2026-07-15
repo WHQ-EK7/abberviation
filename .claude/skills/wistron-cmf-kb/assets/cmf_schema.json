@@ -1,0 +1,395 @@
+{
+  "version": "1.0",
+  "description": "Wistron CMF canonical schema. Single source of truth for validate_cmf.py and normalize_cmf.py.",
+  "required_fields": [
+    "customer",
+    "material",
+    "manufacturing_method"
+  ],
+  "color_pn_required_one_of": [
+    "wistron_color_pn",
+    "customer_color_pn"
+  ],
+  "legacy_map": {
+    "Brand": "customer",
+    "Project": "projects",
+    "Material": "material",
+    "Manufacturing Methods": "manufacturing_method",
+    "Material SPEC/Apply to.": "material_specs",
+    "OEM Vendor": "oem_vendor",
+    "Material Supplier": "material_supplier",
+    "Finish Applicator": "finish_applicator",
+    "Finish Supplier": "finish_supplier",
+    "Customer Color Name_PN": "customer_color_pn",
+    "Wstron Color_PN": "wistron_color_pn",
+    "Wstron Color HEX": "wistron_color_hex",
+    "Customer Color HEX": "customer_color_hex",
+    "Light Source": "light_source",
+    "Standards Color": "standards_color",
+    "Gloss Units": "gloss_units",
+    "Surface Finishing": "surface_finishing",
+    "Remark": "remark",
+    "URL": "spec_url"
+  },
+  "image_fields": [
+    "image",
+    "Color Images",
+    "Sample images"
+  ],
+  "multi_value_fields": {
+    "projects": {
+      "seps": [
+        ",",
+        ";",
+        "/"
+      ],
+      "protect_size_tokens": true,
+      "note": "M7 1U/2U 的 /2U 是尺寸不是專案，切完要把 ^\\d+U$ 的碎片黏回前一段"
+    },
+    "material_specs": {
+      "seps": [
+        ","
+      ],
+      "protect_size_tokens": false,
+      "note": "只切逗號。PC/ABS、PC+ABS 是單一材料，切 / 會拆壞"
+    },
+    "oem_vendor": {
+      "seps": [
+        "/",
+        ","
+      ],
+      "protect_size_tokens": false,
+      "note": "UNEEC/Chenbro/Amtek 是三家廠，/ 一律當分隔"
+    }
+  },
+  "enums": {
+    "material": [
+      "Metal",
+      "Plastic",
+      "Printing"
+    ],
+    "light_source": [
+      "CWF/F2",
+      "D65",
+      "A",
+      "TL84"
+    ],
+    "measurement_source": [
+      "Customer",
+      "WHQ",
+      "WZS",
+      "FA"
+    ],
+    "customer": [
+      "Cindy",
+      "Rosa",
+      "HPE",
+      "Naomi",
+      "Yama Kyo"
+    ]
+  },
+  "manufacturing_methods": {
+    "Injection Molding": {
+      "kind": "forming",
+      "pn_suffix": null,
+      "aliases": [
+        "injection molding",
+        "injection moulding"
+      ]
+    },
+    "Double Injection": {
+      "kind": "forming",
+      "pn_suffix": null,
+      "aliases": [
+        "double injection",
+        "2k injection"
+      ]
+    },
+    "Die-Casting": {
+      "kind": "forming",
+      "pn_suffix": null,
+      "aliases": [
+        "die-casting",
+        "die casting"
+      ]
+    },
+    "Stamping": {
+      "kind": "forming",
+      "pn_suffix": null,
+      "aliases": [
+        "stamping"
+      ]
+    },
+    "Extrusion + CNC": {
+      "kind": "forming",
+      "pn_suffix": null,
+      "aliases": [
+        "extrusion+cnc",
+        "extrusion + cnc"
+      ]
+    },
+    "Composite Machining": {
+      "kind": "forming",
+      "pn_suffix": null,
+      "aliases": [
+        "composite machining"
+      ]
+    },
+    "Raw Material": {
+      "kind": "forming",
+      "pn_suffix": null,
+      "aliases": [
+        "raw material"
+      ]
+    },
+    "Powder Coating": {
+      "kind": "finish",
+      "pn_suffix": "PE",
+      "aliases": [
+        "powder coating",
+        "powder painting",
+        "black powder painting",
+        "silver powder painting",
+        "black painting",
+        "light gray painting"
+      ],
+      "pn_suffix_note": "PE 為噴粉專用，液態塗裝一律用 T（2026-07-14 使用者定調）"
+    },
+    "Liquid Coating": {
+      "kind": "finish",
+      "pn_suffix": "T",
+      "aliases": [
+        "liquid coating",
+        "liquid paint",
+        "low bake wet paint",
+        "wet paint"
+      ]
+    },
+    "Anodizing": {
+      "kind": "finish",
+      "pn_suffix": "E",
+      "aliases": [
+        "anodized",
+        "anodizing",
+        "anodize",
+        "black anodized",
+        "black anodized (黑色陽極)",
+        "black anodized  (黑色陽極)"
+      ]
+    },
+    "Electrophoresis": {
+      "kind": "finish",
+      "pn_suffix": "ED",
+      "aliases": [
+        "black electrophoresis",
+        "black electrophoresis (黑色電著)",
+        "ed",
+        "e-coat",
+        "electrophoretic deposition",
+        "電著"
+      ]
+    },
+    "PVD": {
+      "kind": "finish",
+      "pn_suffix": "E",
+      "aliases": [
+        "pvd",
+        "physical vapor deposition"
+      ]
+    },
+    "NCVM": {
+      "kind": "finish",
+      "pn_suffix": "E",
+      "aliases": [
+        "ncvm"
+      ]
+    },
+    "Pad Print": {
+      "kind": "finish",
+      "pn_suffix": "P",
+      "aliases": [
+        "pad print",
+        "pad printing"
+      ]
+    },
+    "LBL": {
+      "kind": "finish",
+      "pn_suffix": "P",
+      "aliases": [
+        "lbl",
+        "lbl(layer-by-layer)",
+        "layer-by-layer"
+      ]
+    }
+  },
+  "finish_note_keywords": [
+    "Black",
+    "Silver",
+    "Light Gray",
+    "White",
+    "Blue",
+    "Red"
+  ],
+  "color_pn": {
+    "pattern": "^ACS-S?\\d{4}[A-Z]{0,2}(-\\d{1,2})?$",
+    "exempt_values": [
+      "ANODIZE BLACK",
+      "TPU (NO PN)"
+    ],
+    "family_by_first_digit": {
+      "0": "Black / Gray / White",
+      "1": "Red",
+      "2": "Orange / Brown / Burgundy",
+      "3": "Gold / Champagne",
+      "4": "Green",
+      "5": "Blue",
+      "8": "Silver / Aluminum"
+    },
+    "variant_suffix": "-1 / -02 皆有出現，變體序號 1~2 碼"
+  },
+  "measurement_prefixes": [
+    "Customer",
+    "WHQ",
+    "WZS",
+    "FA"
+  ],
+  "measurement_suffixes": [
+    "L",
+    "a",
+    "b",
+    "E",
+    "Gloss",
+    "FT"
+  ],
+  "measurement_aliases": {
+    "WZS_b": "WZS_B"
+  },
+  "ranges": {
+    "L": [
+      0,
+      100
+    ],
+    "a": [
+      -128,
+      127
+    ],
+    "b": [
+      -128,
+      127
+    ],
+    "E": [
+      0,
+      100
+    ]
+  },
+  "rules": {
+    "E001": {
+      "level": "error",
+      "msg": "缺必填欄位"
+    },
+    "E002": {
+      "level": "error",
+      "msg": "沒有任何色號 (wistron_color_pn / customer_color_pn 皆空)"
+    },
+    "E003": {
+      "level": "error",
+      "msg": "HEX 格式錯誤，需為 #RRGGBB"
+    },
+    "E004": {
+      "level": "error",
+      "msg": "Lab 值超出合理範圍"
+    },
+    "E005": {
+      "level": "error",
+      "msg": "ΔE 為負值 — 疑似 b 值錯位到 E 欄"
+    },
+    "E006": {
+      "level": "error",
+      "msg": "色號後綴與『表面處理』不符（注意：後綴看的是 finish，不是 forming）"
+    },
+    "W101": {
+      "level": "warn",
+      "msg": "工法不在 canonical 清單，需人工歸類"
+    },
+    "W103": {
+      "level": "warn",
+      "msg": "HEX 與 Lab 換算色差 > 10，HEX 可能為目測填寫"
+    },
+    "W104": {
+      "level": "warn",
+      "msg": "Material Supplier 內含括號料號，應拆出 material_grade"
+    },
+    "W105": {
+      "level": "warn",
+      "msg": "同一色號對應到多組不同 HEX"
+    },
+    "W106": {
+      "level": "warn",
+      "msg": "Project 為空"
+    },
+    "W107": {
+      "level": "warn",
+      "msg": "疑似重複列"
+    },
+    "W108": {
+      "level": "warn",
+      "msg": "Manufacturing Methods 放的是成型工法，真正的表面處理埋在 Remark 裡"
+    },
+    "W109": {
+      "level": "warn",
+      "msg": "色號有製程後綳，但工法欄與 Remark 都找不到對應的表面處理"
+    },
+    "W110": {
+      "level": "warn",
+      "msg": "Material Supplier 疑似含多家廠商或牌號（含 / 或料號），需人工拆分"
+    },
+    "W102": {
+      "level": "warn",
+      "msg": "客戶代號不在已知清單，請確認是新客戶還是拼字錯誤"
+    },
+    "W112": {
+      "level": "warn",
+      "msg": "客戶色名尾碼（PDC/PNT）指出的表面處理，與色號後綳不一致"
+    }
+  },
+  "remark_finish_patterns": {
+    "Powder Coating": [
+      "powder coating",
+      "powder painting"
+    ],
+    "Liquid Coating": [
+      "liquid paint",
+      "wet paint"
+    ],
+    "Anodizing": [
+      "anodize",
+      "anodized",
+      "陽極"
+    ],
+    "Electrophoresis": [
+      "electrophoresis",
+      "電著"
+    ],
+    "PVD": [
+      "pvd"
+    ],
+    "Pad Print": [
+      "pad print"
+    ]
+  },
+  "color_hex_resolution": {
+    "_comment": "colors 表以 wistron_color_pn 為 unique key。同一色號出現多組 HEX 時，依序套用下列規則決定勝出者。HEX 只是螢幕示意色（人工目測填的），不是量測值，所以規則的重點是『挑最可信的那一筆』，而非算平均。",
+    "rules": [
+      "1. 該列有 Lab 量測值 → 優先（代表有實際打樣量過，HEX 比較可能是照實物填的）",
+      "2. 否則取出現次數最多的 HEX",
+      "3. 仍平手 → 取第一次出現的"
+    ],
+    "note": "落敗的 HEX 會列進報告，人工可用 corrections.json 覆寫"
+  },
+  "color_name_finish_suffix": {
+    "_comment": "客戶色名尾碼也帶表面處理資訊（Naomi 那批）。可與色號後綴、工法欄、Remark 交叉驗證。",
+    "PDC": "Powder Coating",
+    "PNT": "Liquid Coating",
+    "PE": "Powder Coating"
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "_comment": "人工確認過的資料修正。normalize_cmf.py 會在正規化前套用，並記進報告。原始資料不動，修正有來源可追溯。新增修正時直接加一筆進 corrections 陣列。",
+  "version": "1.0",
+  "corrections": [
+    {
+      "id": "C001",
+      "match": {
+        "Brand": "Cindy",
+        "Project": "Pegasus",
+        "Manufacturing Methods": "Anodized",
+        "Wstron Color_PN": "ACS-S8209PE"
+      },
+      "set": {
+        "Wstron Color_PN": "ACS-S8209E"
+      },
+      "reason": "色號打錯：陽極的後綴應為 E，不是 PE（PE 是噴粉）。同專案的另一筆（列 81）就是 ACS-S8209E。",
+      "confirmed_by": "user",
+      "date": "2026-07-14"
+    },
+    {
+      "id": "C002",
+      "match": {
+        "Brand": "Cindy",
+        "Wstron Color_PN": "ACS-S04341"
+      },
+      "set": {
+        "Wstron Color_PN": "ACS-S0434-1"
+      },
+      "reason": "色系流水號固定 4 碼。ACS-S04341 是 5 碼，實為 ACS-S0434 的變體 1，漏了連字號。",
+      "confirmed_by": "user",
+      "date": "2026-07-14"
+    },
+    {
+      "id": "C003",
+      "match": {
+        "Brand": "Naomi",
+        "Wstron Color_PN": "ACS-S8241PE"
+      },
+      "set": {
+        "Wstron Color_PN": "ACS-S8241T"
+      },
+      "reason": "PE 為噴粉專用後綳，液態塗裝應為 T（使用者確認）。佐證：該列客戶色名尾碼為 PNT（PaiNT），且 Remark 明載 Liquid Paint；同批的 PDC（PowDer Coating）件則正確使用 PE 後綳。",
+      "confirmed_by": "user",
+      "date": "2026-07-14"
+    },
+    {
+      "id": "C004",
+      "match": {
+        "Brand": "Naomi",
+        "Wstron Color_PN": "ACS-S0376PE-3"
+      },
+      "set": {
+        "Wstron Color_PN": "ACS-S0376T-3"
+      },
+      "reason": "PE 為噴粉專用後綴，液態塗裝應為 T（使用者確認）。佐證：該列客戶色名尾碼為 PNT（PaiNT），且 Remark 明載 Liquid Paint；同批的 PDC（PowDer Coating）件則正確使用 PE 後綴。",
+      "confirmed_by": "user",
+      "date": "2026-07-14"
+    },
+    {
+      "id": "C005",
+      "match": {
+        "Brand": "Naomi",
+        "Wstron Color_PN": "ACS-S0376PE-4"
+      },
+      "set": {
+        "Wstron Color_PN": "ACS-S0376T-4"
+      },
+      "reason": "PE 為噴粉專用後綴，液態塗裝應為 T（使用者確認）。佐證：該列客戶色名尾碼為 PNT（PaiNT），且 Remark 明載 Liquid Paint；同批的 PDC（PowDer Coating）件則正確使用 PE 後綴。",
+      "confirmed_by": "user",
+      "date": "2026-07-14"
+    }
+  ],
+  "merges": [
+    {
+      "id": "M001",
+      "status": "pending",
+      "rows": [
+        "列 1",
+        "列 81"
+      ],
+      "key": "Cindy / Pegasus / Anodizing / ACS-S8209E / Die-Casting / SOUTHCO",
+      "reason": "套用 C001 後，這兩列的識別欄位完全相同，且欄位互補——列 1 有 WHQ Lab + Gloss + Remark，列 81 有色名 + HEX。研判是同一筆資料被拆成兩列（一列記量測、一列記色名），應合併為一筆。",
+      "merged_record": {
+        "Customer Color Name_PN": "Anodized Natural",
+        "Wstron Color HEX": "#B6B6B6",
+        "WHQ_L": "81.99",
+        "WHQ_a": "-0.29",
+        "WHQ_b": "1.25",
+        "WHQ_Gloss": "5.2(4~6)",
+        "Remark": "Cosmetic Surface:8~15 GU"
+      },
+      "awaiting": "使用者確認是否合併"
+    }
+  ]
+}
