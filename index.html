@@ -1,323 +1,1097 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wistron CMF Knowledge Base</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>伺服器知識庫 - Wistron</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  :root{
-    --purple:#702082; --purple-dark:#4e1659; --purple-tint:#f7f2f9;
-    --ink:#1a1a1a; --muted:#6b6b70; --line:rgba(0,0,0,.09);
-    --bg:#f5f5f3; --card:#ffffff;
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    background: #f5f5f3; color: #1a1a1a; min-height: 100vh;
   }
-  *{box-sizing:border-box}
-  body{
-    margin:0; background:var(--bg); color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Roboto,Helvetica,Arial,sans-serif;
-    font-size:14px; line-height:1.5;
+
+  /* ── Header ── */
+  .page-header {
+    background: #fff; border-bottom: 0.5px solid rgba(0,0,0,0.1);
+    padding: 18px 36px 0; position: sticky; top: 0; z-index: 100;
   }
-  header{
-    position:sticky; top:0; z-index:20; background:var(--purple);
-    color:#fff; padding:14px 22px; display:flex; align-items:baseline; gap:14px;
-    box-shadow:0 1px 0 rgba(0,0,0,.15);
+  .header-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 4px; gap: 8px;
   }
-  header h1{font-size:17px; margin:0; font-weight:650; letter-spacing:.02em}
-  header .sub{font-size:12px; opacity:.8}
-  .wrap{max-width:100%; padding:20px 22px 60px}
-  .toolbar{
-    display:flex; flex-wrap:wrap; gap:10px; align-items:center;
-    margin-bottom:16px;
+  .page-header h1 { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+
+  .nav-tabs { display: flex; gap: 0; }
+  .nav-tab {
+    padding: 10px 20px 12px; font-size: 14px; font-weight: 600; color: #888;
+    cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;
+    white-space: nowrap;
   }
-  .toolbar input[type=text], .toolbar select{
-    font:inherit; padding:8px 11px; border:1px solid var(--line);
-    border-radius:9px; background:var(--card); color:var(--ink); min-width:130px;
+  .nav-tab:hover { color: #555; }
+  .nav-tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
+
+  .header-actions { display: flex; gap: 8px; align-items: center; padding-bottom: 12px; }
+  .action-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 7px 12px; font-size: 12px; font-weight: 500;
+    border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);
+    cursor: pointer; white-space: nowrap; transition: all 0.15s;
+    background: #fff; color: #444;
   }
-  .toolbar input[type=text]{min-width:230px}
-  .toolbar input[type=text]:focus, .toolbar select:focus{
-    outline:2px solid var(--purple); outline-offset:-1px; border-color:transparent;
+  .action-btn:hover { background: #f5f5f3; border-color: rgba(0,0,0,0.3); color: #1a1a1a; }
+  .action-btn.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .action-btn.primary:hover { background: #333; }
+  .action-btn.purple { background: #702082; color: #fff; border-color: #702082; }
+  .action-btn.purple:hover { background: #5a1a6a; }
+  #abbr-file-input, #cmf-file-input { display: none; }
+
+  /* ── Layout ── */
+  .main { max-width: 100％; margin: 0 auto; padding: 16px; }
+  .content-view { display: none; }
+  .content-view.active { display: block; }
+
+  /* ── 縮寫查詢 ── */
+  .search-wrap { max-width: 860px; margin: 0 auto 16px; position: relative; }
+  .search-wrap input {
+    width: 100%; padding: 10px 40px; font-size: 15px;
+    border: 1px solid rgba(0,0,0,0.15); border-radius: 10px;
+    background: #f9f9f8; outline: none; transition: all 0.2s;
   }
-  .btn{
-    font:inherit; padding:8px 14px; border-radius:9px; border:1px solid var(--line);
-    background:var(--card); color:var(--ink); cursor:pointer;
+  .search-wrap input:focus { border-color: #1a1a1a; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #888; font-size: 16px; pointer-events: none; }
+  .clear-btn {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: rgba(0,0,0,0.1); border: none; border-radius: 50%;
+    cursor: pointer; width: 20px; height: 20px;
+    display: none; align-items: center; justify-content: center; font-size: 12px;
   }
-  .btn:hover{background:var(--purple-tint)}
-  .btn.primary{background:var(--purple); color:#fff; border-color:var(--purple)}
-  .btn.primary:hover{background:var(--purple-dark)}
-  .count{font-size:12px; color:var(--muted); margin-left:auto}
-  .tablewrap{
-    background:var(--card); border:1px solid var(--line); border-radius:12px;
-    overflow:auto; max-height:calc(100vh - 200px);
+  .category-grid {
+    display: grid; grid-template-columns: repeat(9, 2fr);
+    gap: 8px; margin-bottom: 20px;
   }
-  table{border-collapse:collapse; width:100%; min-width:1100px}
-  thead th{
-    position:sticky; top:0; background:var(--purple-tint); color:var(--purple-dark);
-    text-align:left; font-weight:600; font-size:12px; padding:10px 12px;
-    border-bottom:1px solid var(--line); white-space:nowrap; z-index:5;
+  .cat-btn {
+    width: 100%; padding: 10px 4px;
+    border: 1px solid rgba(0,0,0,0.1); border-radius: 20px;
+    background: #fff; color: #555; font-size: 12px; font-weight: 500;
+    cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    transition: all 0.2s; text-align: center; line-height: 1.2;
   }
-  tbody td{padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:middle}
-  tbody tr{cursor:pointer}
-  tbody tr:hover{background:var(--purple-tint)}
-  .swatch{
-    display:inline-block; width:22px; height:22px; border-radius:5px;
-    border:1px solid rgba(0,0,0,.18); vertical-align:middle; margin-right:8px;
-    flex-shrink:0;
+  .cat-btn:hover { background: #fafafa; border-color: rgba(0,0,0,0.3); }
+  .cat-btn.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .cat-btn .count { font-size: 10px; margin-top: 4px; opacity: 0.6; background: rgba(0,0,0,0.05); padding: 0 6px; border-radius: 8px; }
+  .cat-btn.active .count { background: rgba(255,255,255,0.2); opacity: 1; }
+
+  .section { animation: fadeIn 0.3s ease; max-width: 860px; margin: 0 auto; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .section-header {
+    font-size: 12px; font-weight: 700; color: #888; text-transform: uppercase;
+    letter-spacing: 0.05em; padding: 8px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 10px;
   }
-  .pn{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; letter-spacing:-.01em}
-  .colorcell{display:flex; align-items:center; white-space:nowrap}
-  .tag{
-    display:inline-block; padding:2px 8px; border-radius:20px; font-size:11.5px;
-    background:var(--purple-tint); color:var(--purple-dark); white-space:nowrap;
+  .entry { background: #fff; border: 0.5px solid rgba(0,0,0,0.1); border-radius: 10px; margin-bottom: 6px; }
+  .entry-header { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; }
+  .abbr-tag { font-size: 14px; font-weight: 700; min-width: 85px; color: #1a1a1a; }
+  .full-preview { font-size: 13px; color: #666; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chevron { font-size: 10px; color: #ccc; transition: transform 0.2s; }
+  .entry.open .chevron { transform: rotate(90deg); }
+  .entry-detail { display: none; padding: 12px 14px; background: #fafafa; border-top: 0.5px solid #eee; border-radius: 0 0 10px 10px; }
+  .entry.open .entry-detail { display: block; }
+  .detail-label { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; margin-bottom: 4px; }
+  .detail-val { font-size: 14px; line-height: 1.5; margin-bottom: 10px; color: #333; }
+  mark { background: #fff176; color: #000; border-radius: 2px; }
+
+  /* ── 組階說明 ── */
+  .level-single-img {
+    width: 100%; background: #fff; border-radius: 12px;
+    border: 0.5px solid rgba(0,0,0,0.1); padding: 24px;
+    text-align: center;
   }
-  .muted{color:var(--muted)}
-  .empty{padding:40px; text-align:center; color:var(--muted)}
-  /* Detail modal */
-  .overlay{
-    position:fixed; inset:0; background:rgba(20,10,25,.45); display:none;
-    align-items:flex-start; justify-content:center; z-index:50; padding:40px 16px;
-    overflow:auto;
+  .level-single-img img {
+    max-width: 100%; height: auto; border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
   }
-  .overlay.open{display:flex}
-  .modal{
-    background:var(--card); border-radius:14px; max-width:720px; width:100%;
-    box-shadow:0 20px 60px rgba(0,0,0,.3); overflow:hidden;
+  .level-single-img .level-img-error {
+    padding: 60px 20px; color: #bbb; font-size: 14px;
   }
-  .modal-head{
-    background:var(--purple); color:#fff; padding:18px 22px;
-    display:flex; align-items:center; gap:14px;
+
+  /* ── CMF 總表 ── */
+  .cmf-filters {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;
+    background: #fff; padding: 14px 16px; border-radius: 10px;
+    border: 0.5px solid rgba(0,0,0,0.1); margin-bottom: 12px;
   }
-  .modal-head .swatch{width:44px; height:44px; border-radius:8px; margin:0}
-  .modal-head .mtitle{font-size:16px; font-weight:650}
-  .modal-head .msub{font-size:12.5px; opacity:.85; font-family:ui-monospace,Menlo,monospace}
-  .modal-head .x;
-    margin-left:auto; background:rgba(255,255,255,.18); border:none; color:#fff;
-    width:32px; height:32px; border-radius:8px; font-size:18px; cursor:pointer;
+  .cmf-filter-group { display: flex; flex-direction: column; gap: 4px; }
+  .cmf-filter-group label { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.04em; }
+  .cmf-filter-group select, .cmf-search-input {
+    padding: 7px 10px; font-size: 13px; border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 8px; background: #f9f9f8; outline: none; font-family: inherit;
   }
-  .modal-head .x:hover{background:rgba(255,255,255,.32)}
-  .modal-body{padding:8px 22px 22px}
-  .section-label{
-    font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--purple);
-    font-weight:700; margin:18px 0 6px;
+  .cmf-search-input { width: 220px; }
+  .cmf-filter-group select:focus, .cmf-search-input:focus { border-color: #702082; background: #fff; }
+
+  .cmf-summary {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px; padding: 0 2px;
   }
-  .kv{display:grid; grid-template-columns:150px 1fr; gap:2px 14px; font-size:13px}
-  .kv dt{color:var(--muted); padding:5px 0}
-  .kv dd{margin:0; padding:5px 0; word-break:break-word}
-  .labgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px}
-  .labcard{border:1px solid var(--line); border-radius:9px; padding:9px 11px}
-  .labcard .src{font-size:11px; color:var(--purple); font-weight:700; margin-bottom:3px}
-  .labcard .vals{font-size:12.5px; font-family:ui-monospace,Menlo,monospace}
-  @media (max-width:600px){
-    .kv{grid-template-columns:1fr}
-    .kv dt{padding-bottom:0}
-    .wrap{padding:14px}
-    header{padding:12px 14px}
+  .cmf-summary-text { font-size: 13px; font-weight: 600; color: #702082; }
+
+  .cmf-table-wrap {
+    background: #fff; border-radius: 10px;
+    border: 0.5px solid rgba(0,0,0,0.1);
+    overflow: auto; max-height: 65vh;
+  }
+  .cmf-table-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+  .cmf-table-wrap::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+  .cmf-table-wrap::-webkit-scrollbar-track { background: #f9f9f9; }
+
+  .cmf-table { width: 100%; border-collapse: collapse; min-width: 1100px; font-size: 13px; }
+  .cmf-table thead th {
+    position: sticky; top: 0; z-index: 10;
+    background: #702082; color: #fff;
+    padding: 11px 12px; text-align: center;
+    border: 1px solid #9240a3; white-space: nowrap; font-size: 13px;
+  }
+  .cmf-table td {
+    padding: 9px 12px; border: 1px solid #e8e8e8;
+    text-align: center; vertical-align: middle; color: #333;
+  }
+  .cmf-table tbody tr:nth-child(even) { background: #fdf9ff; }
+  .cmf-table tbody tr:hover { background: #f0e6f5; }
+
+  .color-swatch {
+    display: inline-block; width: 18px; height: 18px;
+    border-radius: 3px; border: 1px solid rgba(0,0,0,0.15);
+    vertical-align: middle; margin-right: 5px;
+  }
+  .cmf-act-btn {
+    display: inline-block; font-size: 12px; font-weight: 600;
+    cursor: pointer; white-space: nowrap; text-decoration: underline;
+  }
+  .cmf-act-detail { color: #0056b3; }
+  .cmf-act-detail:hover { color: #003d82; }
+  .cmf-act-edit   { color: #28a745; }
+  .cmf-act-edit:hover { color: #1a7a31; }
+  .cmf-act-delete { background: #dc3545; color: #fff; padding: 4px 10px; border-radius: 4px; text-decoration: none; font-size: 12px; border: none; cursor: pointer; font-weight: 600; }
+  .cmf-act-delete:hover { background: #b02a37; }
+
+  /* ── CMF 共用 Modal 底層 ── */
+  .cmf-modal-bg {
+    display: none; position: fixed; inset: 0; z-index: 400;
+    background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);
+    align-items: flex-start; justify-content: center; overflow-y: auto; padding: 40px 16px;
+  }
+  .cmf-modal-bg.open { display: flex; }
+  .cmf-modal {
+    background: #fff; border-radius: 14px; width: 100%; max-width: 780px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2); margin: auto;
+  }
+  .cmf-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 24px 14px; border-bottom: 1px solid #eee;
+  }
+  .cmf-modal-header h2 { font-size: 16px; font-weight: 700; }
+  .cmf-modal-header h2.purple { color: #702082; }
+  .cmf-modal-header h2.green  { color: #28a745; }
+  .cmf-modal-close {
+    width: 28px; height: 28px; border-radius: 50%; border: none;
+    background: #f0e6f5; cursor: pointer; font-size: 14px; color: #702082;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .cmf-modal-body { padding: 20px 24px 24px; }
+
+  /* Detail 表格 */
+  .cmf-detail-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  .cmf-detail-table th {
+    background: #fdf9ff; color: #0056b3; font-size: 12px; font-weight: 700;
+    padding: 9px 14px; border: 1px solid #ddd; text-align: right; width: 28%; white-space: nowrap;
+  }
+  .cmf-detail-table td { padding: 9px 14px; border: 1px solid #ddd; font-size: 13px; color: #333; }
+  .cmf-lab-table { width: 100%; border-collapse: collapse; text-align: center; margin-top: 12px; }
+  .cmf-lab-table th { background: #fdf9ff; color: #0056b3; padding: 8px; border: 1px solid #ddd; font-size: 12px; font-weight: 700; }
+  .cmf-lab-table td { padding: 8px; border: 1px solid #ddd; font-size: 13px; }
+  .cmf-lab-table .row-header { background: #fdf9ff; color: #0056b3; font-weight: 700; text-align: right; padding-right: 14px; font-size: 12px; }
+  .cmf-section-title { font-size: 13px; font-weight: 700; color: #7b1fa2; margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #7b1fa2; }
+
+  /* Edit 表單 */
+  .cmf-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; }
+  .cmf-edit-field { display: flex; flex-direction: column; gap: 4px; }
+  .cmf-edit-field label { font-size: 11px; font-weight: 700; color: #555; }
+  .cmf-edit-field input, .cmf-edit-field textarea {
+    padding: 7px 10px; font-size: 13px; border: 1px solid #ccc;
+    border-radius: 6px; background: #fff; outline: none; font-family: inherit; width: 100%;
+  }
+  .cmf-edit-field input:focus, .cmf-edit-field textarea:focus { border-color: #28a745; }
+  .cmf-edit-field.full-width { grid-column: 1 / -1; }
+  .cmf-edit-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+  .cmf-save-btn { background: #28a745; color: #fff; border: none; padding: 9px 22px; font-size: 14px; font-weight: 700; border-radius: 8px; cursor: pointer; }
+  .cmf-save-btn:hover { background: #218838; }
+  .cmf-cancel-btn { background: #6c757d; color: #fff; border: none; padding: 9px 18px; font-size: 14px; border-radius: 8px; cursor: pointer; }
+  .cmf-cancel-btn:hover { background: #565e64; }
+
+  .cmf-empty {
+    text-align: center; padding: 60px 20px; color: #bbb; font-size: 14px;
+  }
+  .cmf-upload-hint {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .cmf-upload-hint svg { opacity: 0.3; }
+
+  /* ── Drag & Drop ── */
+  .drop-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(26,26,26,0.5); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+  }
+  .drop-overlay.active { display: flex; }
+  .drop-box { background: #fff; border-radius: 16px; border: 2px dashed #1a1a1a; padding: 40px 60px; text-align: center; }
+  .drop-box p { font-size: 16px; font-weight: 600; margin-top: 10px; }
+  .drop-box span { font-size: 13px; color: #888; }
+
+  /* ── Add Abbr Modal ── */
+  .modal-bg { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
+  .modal-bg.open { display: flex; }
+  .modal { background: #fff; border-radius: 14px; padding: 24px 28px; width: 90%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .modal h2 { font-size: 16px; font-weight: 700; margin-bottom: 18px; }
+  .form-row { margin-bottom: 12px; }
+  .form-row label { display: block; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 5px; }
+  .form-row input, .form-row select, .form-row textarea { width: 100%; padding: 9px 12px; font-size: 14px; border: 1px solid rgba(0,0,0,0.15); border-radius: 8px; background: #f9f9f8; outline: none; font-family: inherit; }
+  .form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color: #1a1a1a; background: #fff; }
+  .form-row textarea { resize: vertical; min-height: 70px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+  .modal-cancel { padding: 8px 16px; font-size: 13px; border: 1px solid rgba(0,0,0,0.15); border-radius: 8px; background: #fff; cursor: pointer; }
+  .modal-submit { padding: 8px 18px; font-size: 13px; font-weight: 600; border: none; border-radius: 8px; background: #1a1a1a; color: #fff; cursor: pointer; }
+
+  /* ── Toast ── */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px); background: #1a1a1a; color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 13px; z-index: 999; opacity: 0; transition: all 0.3s; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { background: #c0392b; }
+
+  @media (max-width: 800px) {
+    .page-header { padding: 12px 16px 0; }
+    .category-grid { grid-template-columns: repeat(3, 1fr); }
+    .action-btn span { display: none; }
+    .cmf-search-input { width: 180px; }
+    .nav-tab { padding: 10px 12px 12px; font-size: 13px; }
   }
 </style>
 </head>
 <body>
-<header>
-  <h1>Wistron CMF Knowledge Base</h1>
-  <span class="sub">Color · Material · Finish</span>
-</header>
 
-<div class="wrap">
-  <div class="toolbar">
-    <input type="text" id="cmf-search" placeholder="搜尋色號、專案、客戶色名、供應商…">
-    <select id="cmf-f-brand"><option value="">全部客戶</option></select>
-    <select id="cmf-f-material"><option value="">全部材質</option></select>
-    <select id="cmf-f-method"><option value="">全部工法</option></select>
-    <button class="btn" id="cmf-reset">清除</button>
-    <span class="count" id="cmf-count"></span>
-  </div>
-
-  <div class="tablewrap">
-    <table>
-      <thead>
-        <tr>
-          <th>客戶</th><th>材質</th><th>專案</th>
-          <th>Wistron 色號</th><th>客戶色名</th>
-          <th>工法</th><th>底材 SPEC</th><th>供應商</th>
-        </tr>
-      </thead>
-      <tbody id="cmf-tbody"></tbody>
-    </table>
-  </div>
-  <div class="empty" id="cmf-empty" style="display:none">沒有符合條件的資料</div>
-</div>
-<div class="overlay" id="cmf-detail" onclick="if(event.target===this)closeDetail()">
-  <div class="modal">
-    <div class="modal-head">
-      <span class="swatch" id="d-swatch"></span>
-      <div>
-        <div class="mtitle" id="d-title"></div>
-        <div class="msub" id="d-sub"></div>
-      </div>
-      <button class="x" onclick="closeDetail()" aria-label="關閉">×</button>
+<div class="page-header">
+  <div class="header-top">
+    <h1>Wistron Server Knowledge</h1>
+    <!-- 縮寫查詢的操作按鈕 -->
+    <div class="header-actions" id="abbr-actions">
+      <button class="action-btn" onclick="openAddModal()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>新增縮寫</span>
+      </button>
+      <label class="action-btn primary" for="abbr-file-input">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>上傳 Excel</span>
+      </label>
+      <input type="file" id="abbr-file-input" accept=".xlsx,.xls" />
     </div>
-    <div class="modal-body" id="cmf-detail-body"></div>
+    <!-- CMF 的操作按鈕 -->
+    <div class="header-actions" id="cmf-actions" style="display:none;">
+      <label class="action-btn purple" for="cmf-file-input">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>上傳 CMF Excel</span>
+      </label>
+      <button class="action-btn purple" id="cmf-export-btn" onclick="cmfExport()" style="display:none;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8" transform="rotate(180 12 12)"/><line x1="12" y1="3" x2="12" y2="15" transform="rotate(180 12 12)"/></svg>
+        <span>匯出篩選結果</span>
+      </button>
+      <input type="file" id="cmf-file-input" accept=".xlsx,.xls,.csv" />
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchView('abbr-view', this)">縮寫查詢</div>
+    <div class="nav-tab" onclick="switchView('level-view', this)">組階說明 (L1–L12)</div>
+    <div class="nav-tab" onclick="switchView('cmf-view', this)">CMF 總表</div>
   </div>
 </div>
-<script src="cmf-data.js"></script>
+
+<!-- Drag & Drop overlay（縮寫 Excel） -->
+<div class="drop-overlay" id="drop-overlay">
+  <div class="drop-box">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="1.8" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <p>放開以更新縮寫查詢表</p>
+    <span>支援 .xlsx / .xls 格式</span>
+  </div>
+</div>
+
+<!-- 新增縮寫 Modal -->
+<div class="modal-bg" id="add-modal">
+  <div class="modal">
+    <h2>新增縮寫</h2>
+    <div class="form-row"><label>分類</label><select id="add-cat"></select></div>
+    <div class="form-row"><label>或新增分類名稱</label><input type="text" id="add-newcat" placeholder="留空則使用上方選擇的分類" /></div>
+    <div class="form-row"><label>縮寫 <span style="color:#e74c3c">*</span></label><input type="text" id="add-abbr" placeholder="例如：NPI" /></div>
+    <div class="form-row"><label>英文全稱 <span style="color:#e74c3c">*</span></label><input type="text" id="add-full" placeholder="例如：New Product Introduction" /></div>
+    <div class="form-row"><label>中文說明</label><textarea id="add-zh" placeholder="選填"></textarea></div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeAddModal()">取消</button>
+      <button class="modal-submit" onclick="submitAdd()">新增</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- CMF 編輯 Modal -->
+<div class="cmf-modal-bg" id="cmf-edit-modal">
+  <div class="cmf-modal" style="max-width:600px;">
+    <div class="cmf-modal-header">
+      <h2>編輯產品資料</h2>
+      <button class="cmf-modal-close" onclick="closeCmfEdit()">✕</button>
+    </div>
+    <div class="cmf-modal-body" id="cmf-edit-body" style="max-height:70vh;overflow-y:auto;"></div>
+    <div style="padding:0 24px 20px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid #eee;padding-top:14px;margin-top:4px;">
+      <button class="modal-cancel" onclick="closeCmfEdit()">取消</button>
+      <button class="modal-submit" style="background:#702082;border:none;" onclick="saveCmfEdit()">儲存修改</button>
+    </div>
+  </div>
+</div>
+
+<!-- CMF 詳細資訊 Modal -->
+<div class="cmf-modal-bg" id="cmf-detail-modal">
+  <div class="cmf-modal">
+    <div class="cmf-modal-header">
+      <h2 class="purple">產品詳細資訊</h2>
+      <button class="cmf-modal-close" onclick="closeCmfDetail()">✕</button>
+    </div>
+    <div class="cmf-modal-body" id="cmf-detail-body"></div>
+  </div>
+</div>
+
+<!-- CMF 編輯 Modal -->
+<div class="cmf-modal-bg" id="cmf-edit-modal">
+  <div class="cmf-modal">
+    <div class="cmf-modal-header">
+      <h2 class="green">編輯產品資料</h2>
+      <button class="cmf-modal-close" onclick="closeCmfEdit()">✕</button>
+    </div>
+    <div class="cmf-modal-body" id="cmf-edit-body"></div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- ① 縮寫查詢 -->
+  <div id="abbr-view" class="content-view active">
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="search" placeholder="搜尋縮寫、英文或中文..." autocomplete="off" />
+      <button class="clear-btn" id="clear-btn">×</button>
+    </div>
+    <div class="category-grid" id="cat-grid"></div>
+    <div id="results"></div>
+  </div>
+
+  <!-- ② 組階說明 -->
+  <div id="level-view" class="content-view">
+    <div class="level-single-img">
+      <img src="levels.png" alt="組裝層級說明 L1–L12"
+           onerror="this.style.display='none'; document.getElementById('level-img-error').style.display='block';" />
+      <div id="level-img-error" class="level-img-error" style="display:none;">
+        找不到圖片，請確認 <code>levels.png</code> 已上傳至 GitHub repository 根目錄
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ CMF 總表 -->
+  <div id="cmf-view" class="content-view">
+    <!-- 篩選列 -->
+    <div class="cmf-filters" id="cmf-filters" style="display:none;">
+      <div class="cmf-filter-group">
+        <label>Brand</label>
+        <select id="cmf-f-brand"><option value="">全部</option></select>
+      </div>
+      <div class="cmf-filter-group">
+        <label>Material</label>
+        <select id="cmf-f-material"><option value="">全部</option></select>
+      </div>
+      <div class="cmf-filter-group">
+        <label>Project</label>
+        <select id="cmf-f-project"><option value="">全部</option></select>
+      </div>
+      <div class="cmf-filter-group" style="flex:1;">
+        <label>全表搜尋</label>
+        <input class="cmf-search-input" type="text" id="cmf-search" placeholder="輸入任意關鍵字..." style="width:100%;" />
+      </div>
+      <div style="display:flex; gap:8px; align-items:flex-end;">
+        <button class="action-btn primary" onclick="cmfApplyFilters()">套用</button>
+        <button class="action-btn" onclick="cmfReset()">重設</button>
+      </div>
+    </div>
+
+    <!-- 摘要列 -->
+    <div class="cmf-summary" id="cmf-summary" style="display:none;">
+      <span class="cmf-summary-text" id="cmf-summary-text"></span>
+    </div>
+
+    <!-- 資料表 -->
+    <div id="cmf-content">
+      <div class="cmf-empty">
+        <div class="cmf-upload-hint">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#702082" stroke-width="1.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div style="font-size:15px; color:#888;">點擊右上角「上傳 CMF Excel」載入資料</div>
+          <div style="font-size:12px; color:#bbb;">支援 .xlsx / .xls / .csv，第一列為欄位名稱</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
-(function(){
-  var DATA = (window.CMF_DEFAULT||[]).map(function(r,i){r.__i=i;return r;});
-  var filtered = DATA.slice();
+// ═══════════════════════════════════════════════════
+// ① 縮寫查詢
+// ═══════════════════════════════════════════════════
+let ABBR_DATA = {
+  "Schedule / Phase": [
+    {abbr:"NUDD",full:"New, Unique, Different, Difficult",zh:""},
+    {abbr:"C0",full:"Concept",zh:"概念設計階段"},
+    {abbr:"BU",full:"Bring Up (C0, C1, BU)",zh:""},
+    {abbr:"CT",full:"Component Testing",zh:""},
+    {abbr:"NT",full:"Node Test",zh:""},
+    {abbr:"OT",full:"Offer Test",zh:""},
+    {abbr:"reg",full:"Regression (EX: CT-reg)",zh:""},
+    {abbr:"BA",full:"Business Award",zh:"確認開案得到生意 - 賀成交"},
+    {abbr:"EVT",full:"Engineering Verification Test",zh:"工程驗證測試"},
+    {abbr:"PVT",full:"Production Verification Test",zh:"生產驗證測試"},
+    {abbr:"PPAP",full:"Production Part Approval Process",zh:"樣品生產承認流程"},
+    {abbr:"GA",full:"General Availability",zh:"產品已完成開發，達到市場投放標準。"},
+    {abbr:"EC",full:"Engineering Change",zh:"設計/工程變更"},
+    {abbr:"ESP",full:"Early Ship Program",zh:""},
+    {abbr:"RFI",full:"Ready to Integrate",zh:""},
+    {abbr:"RFD",full:"Release from Development",zh:""},
+    {abbr:"NPI",full:"New Product Introduction",zh:"新產品試產導入服務"},
+    {abbr:"RTS",full:"Ready to Ship/Sale",zh:"出貨"},
+    {abbr:"EOL",full:"End of Life",zh:"停產 - 壽終正寢"},
+    {abbr:"MOR",full:"Monthly Operation Review",zh:"每月營運審查"}
+  ],
+  "Modules": [
+    {abbr:"SM",full:"Storage Module",zh:"存儲模組"},
+    {abbr:"RCP",full:"Right Control Panel",zh:"右耳模組"},
+    {abbr:"LCP",full:"Left Control Panel",zh:"左耳模組"},
+    {abbr:"CEM IO",full:"Common Expansion Module Input/Output",zh:"通用擴展模組 輸入/輸出"},
+    {abbr:"PCIe",full:"Peripheral Component Interconnect Express",zh:"高速週邊元件交互連接裝置"},
+    {abbr:"MHS",full:"Modular Hardware System",zh:"模組化硬體系統"},
+    {abbr:"DC-SCM",full:"Data Center - Scalable Control Module",zh:"數據中心 - 可擴展控制模組"},
+    {abbr:"DC-MHS",full:"Data Center Modular Hardware System",zh:"數據中心模組化硬體系統"},
+    {abbr:"BOSS",full:"Boot Optimized Storage Solution",zh:"支援兩個 M.2 固態硬碟"},
+    {abbr:"EDSFF",full:"Enterprise and Datacenter SSD Form Factor",zh:"企業及資料中心 SSD 形態規格"},
+    {abbr:"OCP",full:"Open Compute Project",zh:"開放計算項目"},
+    {abbr:"OAI",full:"OCP Accelerator Infrastructure",zh:"開放加速器基礎設施"},
+    {abbr:"OAM",full:"Open Accelerator Module",zh:"開放加速器模組"},
+    {abbr:"GPU",full:"Graphics Processing Unit",zh:"圖形處理器"},
+    {abbr:"CPU",full:"Central Processing Unit",zh:"中央處理器"},
+    {abbr:"OSFP",full:"Octal Small Form-factor Pluggable",zh:"可插拔式八通道小型模組"},
+    {abbr:"QSFP",full:"Quad Small Form-factor Pluggable",zh:"四通道小型熱插拔可插拔模組"},
+    {abbr:"PSU",full:"Power Supply Unit",zh:"電源供應器"},
+    {abbr:"M-CRPS",full:"Modular Hardware System Common Redundant Power Supply",zh:"模組化硬體系統 冗餘電源"},
+    {abbr:"HSK",full:"Heatsink",zh:"散熱片 / 散熱器"},
+    {abbr:"Zephyr",full:"A DIMM thermal solution",zh:""},
+    {abbr:"DPC",full:"X DIMM per channel",zh:""}
+  ],
+  "Board and Component": [
+    {abbr:"HPM",full:"Host Processor Module",zh:"主處理器模組"},
+    {abbr:"UBB",full:"Universal Base Board",zh:"通用基板"},
+    {abbr:"PSB",full:"PCIe Switch Board",zh:"PCIe交換板"},
+    {abbr:"PBB",full:"PCIe Base Board",zh:"PCIe基板"},
+    {abbr:"PSBB",full:"PCIe SW Base Board",zh:""},
+    {abbr:"PSRBB",full:"PCIe SW Retimer Base Board",zh:""},
+    {abbr:"PIB",full:"Power Interposer Board",zh:"處理器互連板"},
+    {abbr:"PDB",full:"Power Distribution Board",zh:"電源分配板"},
+    {abbr:"LSB",full:"Leak Sensor Board",zh:"檢測液體洩漏的電子電路板"},
+    {abbr:"BMC",full:"Baseboard Management Controller",zh:"基板管理控制器"},
+    {abbr:"MP",full:"Mid-plane",zh:"中板"},
+    {abbr:"BP",full:"Backplane",zh:"背板"},
+    {abbr:"DPU",full:"Data Processing Unit",zh:"資料處理單元"},
+    {abbr:"NIC",full:"Network Interface Card",zh:"網路介面卡"},
+    {abbr:"Smart NIC",full:"Smart NIC",zh:"智慧網卡"},
+    {abbr:"FLOP",full:"Floating OCP paddle card",zh:""},
+    {abbr:"ICB",full:"Interconnect Board",zh:""},
+    {abbr:"SPM",full:"Storage Processor Module",zh:""},
+    {abbr:"LCC",full:"Link Control Card",zh:""},
+    {abbr:"DIMM",full:"Dual In-line Memory Module",zh:"雙列直插式記憶體模組"},
+    {abbr:"SOCAMM",full:"System On Chip Advanced Memory Module",zh:"新型高效能記憶體模組"}
+  ],
+  "NV Relating": [
+    {abbr:"DGX",full:"Deep GPU Xceleration",zh:"專為企業級 AI 設計的平台"},
+    {abbr:"EGX",full:"Edge Computing GPU Acceleration Platform",zh:"加速邊緣計算的平台"},
+    {abbr:"IGX",full:"Industrial-Grade Edge AI Platform",zh:"工業級邊緣 AI 平台"},
+    {abbr:"HGX",full:"Hyperscale Graphics eXtension",zh:"靈活定制的 AI 硬件平台"},
+    {abbr:"MGX",full:"Modular GPU eXtension / Architecture",zh:"模塊化靈活的計算平台"},
+    {abbr:"SXM",full:"Scalable Matrix Module",zh:"專用模組化設計"},
+    {abbr:"NVLink",full:"NVLink (NVIDIA High-Speed Interconnect)",zh:"NVIDIA 開發的高速互連技術"},
+    {abbr:"ES",full:"Engineer Sample",zh:"樣品測試階段"},
+    {abbr:"QS",full:"Qualification Sample",zh:"樣品測試階段"},
+    {abbr:"PS",full:"Production Sample",zh:"正式版本"},
+    {abbr:"BF3",full:"BlueField 3",zh:"資料處理單元 (DPU)"},
+    {abbr:"BF4",full:"BlueField 4 DPU",zh:"專為 AI 儲存平台打造的 DPU"}
+  ],
+  "Modules Cooling": [
+    {abbr:"LAAC",full:"Liquid-Assisted Air Cooling",zh:"液體輔助空氣冷卻系統"},
+    {abbr:"DLC",full:"Direct Liquid Cooling",zh:"直接液體冷卻系統"},
+    {abbr:"AC",full:"Air Cooling",zh:"空氣冷卻系統"},
+    {abbr:"CDM",full:"Coolant Distribution Manifold",zh:"冷卻液分配歧管"},
+    {abbr:"UQD",full:"Universal / Ultra-Fast Quick Disconnect",zh:"超快速快速斷開接頭裝置"},
+    {abbr:"QD",full:"Quick Disconnect",zh:"快接頭"},
+    {abbr:"BMQC",full:"Blind-Mate Liquid Cooling",zh:""},
+    {abbr:"IMM",full:"Internal Manifold Module",zh:"冷卻系統關鍵組件"},
+    {abbr:"ILC",full:"Immersion Cooling Loop",zh:"浸沒式冷卻技術"}
+  ],
+  "Others": [
+    {abbr:"DAE",full:"Drive Array Enclosure",zh:"驅動陣列外殼"},
+    {abbr:"CBM",full:"New OCP 3.0 card (CBM)",zh:""},
+    {abbr:"SEL",full:"System Event Log",zh:""},
+    {abbr:"BIOS",full:"Basic Input/Output System",zh:""},
+    {abbr:"AVAP",full:"Approved Vendor Approved Price",zh:""},
+    {abbr:"AVL",full:"Approved Vendor List",zh:""},
+    {abbr:"POC",full:"Proof of Concept",zh:""},
+    {abbr:"POR",full:"Plan of Record",zh:""},
+    {abbr:"POP",full:"Proof of Product",zh:""},
+    {abbr:"LOM",full:"LAN on Motherboard",zh:""},
+    {abbr:"PPCM",full:"Portfolio Platform Configuration Matrix",zh:""},
+    {abbr:"rSPI",full:"Restore Serial Peripheral Interface",zh:"SPI快閃記憶體裝置"},
+    {abbr:"SDNO",full:"Software-Defined Network Orchestrator",zh:"軟體定義網路協調器"},
+    {abbr:"SNIA",full:"Storage Networking Industry Association",zh:"儲存網路產業協會"},
+    {abbr:"VCC",full:"Validated Config Check",zh:"已配置設定檢查"},
+    {abbr:"XGMI",full:"eXtended Global Memory Interconnect",zh:"AMD 高速互連技術"}
+  ],
+  "SPEC/DOC": [
+    {abbr:"OU",full:"Open Unit (1OU: 48mm)",zh:""},
+    {abbr:"RU",full:'Rack Unit (1RU: 44.45mm) 19"',zh:""},
+    {abbr:"FH",full:'Full-Height (4.2" / ~10.67mm)',zh:"全高"},
+    {abbr:"HHL",full:'Half-Height, Half-Length',zh:"半高半長"},
+    {abbr:"FHHL",full:'Full-Height, Half-Length',zh:"全高半長"},
+    {abbr:"NVMe",full:"Non-Volatile Memory Express",zh:"非揮發性記憶體"},
+    {abbr:"HEXO",full:"Hexagon Exoskeleton",zh:"設計規範"},
+    {abbr:"FRU",full:"Field Replaceable Unit",zh:"現場可更換單元"},
+    {abbr:"CRU",full:"Customer Replaceable Unit",zh:"客戶可更換單元"},
+    {abbr:"Static rail",full:"Static rail",zh:"靜態滑軌"},
+    {abbr:"Sliding rail",full:"Sliding rail",zh:"動態滑軌"},
+    {abbr:"RSE",full:"Rail Solution Engineering",zh:"滑軌解決方案工程"},
+    {abbr:"ORv3",full:"Open Rack version 3",zh:"OCP 第三版開放機架標準"}
+  ],
+  "Material": [
+    {abbr:"SGCC",full:"Steel Galvanized Cold rolled Coil",zh:"熱浸鍍鋅冷軋鋼板"},
+    {abbr:"SPCC",full:"Steel Plate Cold rolled Coil",zh:"冷軋鋼板"},
+    {abbr:"SECC",full:"Steel Electrolytic Zinc-Coated",zh:"電鍍鋅鋼板"},
+    {abbr:"SUS",full:"Steel Use Stainless",zh:"不銹鋼"},
+    {abbr:"PFAS",full:"Per- and Polyfluoroalkyl Substances",zh:"含碳–氟鍵的合成化學物質"},
+    {abbr:"SIL",full:"System Information Label",zh:"系統資訊標籤"},
+    {abbr:"PC film",full:"Polycarbonate film",zh:"聚碳酸酯薄膜"},
+    {abbr:"PET film",full:"Polyethylene Terephthalate film",zh:"聚對苯二甲酸乙二酯薄膜"}
+  ],
+  "Surface Treatment": [
+    {abbr:"NCVM",full:"Non-Conductive Vacuum Metallization",zh:"金屬不導電真空電鍍"},
+    {abbr:"ED (E-Coat)",full:"Electrophoretic Deposition",zh:"電泳塗裝"},
+    {abbr:"PVD",full:"Physical Vapor Deposition",zh:"物理氣相沉積"},
+    {abbr:"PCF",full:"Product Carbon Footprint",zh:"碳足跡"}
+  ]
+};
 
-  var $=function(id){return document.getElementById(id)};
-  var search=$('cmf-search'), fBrand=$('cmf-f-brand'), fMat=$('cmf-f-material'), fMethod=$('cmf-f-method');
+let abbrActivecat = null, abbrQuery = '', abbrOpenEntries = new Set();
 
-  function uniq(key){
-    var s={};
-    DATA.forEach(function(r){ var v=(r[key]||'').trim(); if(v) s[v]=1; });
-    return Object.keys(s).sort();
+// ═══════════════════════════════════════════════════
+// ② 組階說明（靜態圖片 levels.png，無需 JS）
+// ═══════════════════════════════════════════════════
+
+// CMF 資料（預載 92 筆）
+const CMF_DEFAULT = [{"Brand": "Cindy", "Material": "Metal", "Project": "Pegasus", "Manufacturing Methods": "Anodized", "Material SPEC/Apply to.": "Die-Casting", "OEM Vendor": "SOUTHCO", "WHQ_L": "81.99", "WHQ_a": "-0.29", "WHQ_b": "1.25", "WHQ_Gloss": "5.2(4~6)", "Remark": "Cosmetic Surface:8~15 GU", "Light Source": "CWF/F2", "Customer Color Name_PN": "", "Wstron Color_PN": "ACS-S8209PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Printing", "Project": "M8 1U", "Manufacturing Methods": "LBL(Layer-by-Layer)", "Material SPEC/Apply to.": "", "OEM Vendor": "", "WHQ_L": "35.95", "WHQ_a": "0.01", "WHQ_b": "-0.86", "WHQ_Gloss": "5~10", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO Lime Green", "Wstron Color_PN": "ACS-S4028P", "WZS_L": "35.95", "WZS_a": "0.01", "WZS_B": "-0.86", "WZS_Gloss": "5~10", "Wstron Color HEX": "#62F25A", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Plastic", "Project": "Tornado; Thunder ,Gamut, Avatar", "Manufacturing Methods": "Raw material", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "FRD", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "BLACK(COVESTRO 901510)", "Wstron Color_PN": "ACS-S0484", "WZS_L": "27.78", "WZS_a": "-0.12", "WZS_B": "-0.95", "WZS_Gloss": "", "Wstron Color HEX": "#4D4D4D", "Material Supplier": "BAYBLEND", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Plastic", "Project": "Used in almost all Dell projects", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Standard Black - DPN: PH202", "Wstron Color_PN": "ACS-S0194", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#000000", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Plastic", "Project": "Used in almost all Dell projects", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Access Blue PMSC (Spec R4104)", "Wstron Color_PN": "ACS-S5027", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#BEDAF8", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Plastic", "Project": "Used in almost all Dell projects", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Terracotta PMS 1525C - DPN: COL001561", "Wstron Color_PN": "ACS-S2019", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#B3593D", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Plastic", "Project": "", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Orange, Pantone 021C", "Wstron Color_PN": "ACS-S2017", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#ED7B3B", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Plastic", "Project": "17G: Rack ear housing, E1 carrier, Pap Air", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Rustic Pewter Gery - DPN: COL000199", "Wstron Color_PN": "ACS-S0449", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#C9C9C9", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Metal", "Project": "Tornado; Thunder", "Manufacturing Methods": "Powder coating", "Material SPEC/Apply to.": "Die-Casting", "OEM Vendor": "Bonteck", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "Pantone 285C", "Wstron Color_PN": "ACS-S5053PE", "WZS_L": "43.69", "WZS_a": "-2.36", "WZS_B": "-41.56", "WZS_Gloss": "", "Wstron Color HEX": "#1A7EDB", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Metal", "Project": "Tornado; Thunder", "Manufacturing Methods": "Powder coating", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "FRD", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO Corporate satin aluminum", "Wstron Color_PN": "ACS-S8233PE", "WZS_L": "80.02", "WZS_a": "-0.56", "WZS_B": "1.15", "WZS_Gloss": "7~13", "Wstron Color HEX": "#C4C4C4", "Material Supplier": "Akzo Nobel", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Metal", "Project": "Used in most Dell projects", "Manufacturing Methods": "Powder Coating", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Standard Black - DPN: JG341", "Wstron Color_PN": "ACS-S0281PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#1C1C1C", "Material Supplier": "IVC, Akzo Nobel", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Printing", "Project": "Used in almost all Dell projects", "Manufacturing Methods": "Pad Print", "Material SPEC/Apply to.": "Metal, Plastic", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "refer to : 659 C", "Light Source": "", "Customer Color Name_PN": "DPN: COL0001623 (Blue Printing)", "Wstron Color_PN": "", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#233DA1", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Printing", "Project": "Used in almost all Dell projects", "Manufacturing Methods": "Pad Print", "Material SPEC/Apply to.": "Metal, Plastic", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "refer to : 1525 C", "Light Source": "", "Customer Color Name_PN": "DPN: COL0001624 (Hop Swap Printing)", "Wstron Color_PN": "", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#8F2B18", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Printing", "Project": "Used in almost all Dell projects", "Manufacturing Methods": "Pad Print", "Material SPEC/Apply to.": "Metal, Plastic", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "refer to : 877 C", "Light Source": "", "Customer Color Name_PN": "DPN: COL0001625 (Silver Printing)", "Wstron Color_PN": "", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#E6E6E6", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Printing", "Project": "Used in almost all Dell projects", "Manufacturing Methods": "Pad Print", "Material SPEC/Apply to.": "SGCC, SUS", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Pantone Process Black C (Black)", "Wstron Color_PN": "", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#000000", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Printing", "Project": "17G bezel Lock CAM flage", "Manufacturing Methods": "Pad Print", "Material SPEC/Apply to.": "SPCC", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "Part PN: WDY7N", "Light Source": "", "Customer Color Name_PN": "Pantone 032 C (Red)", "Wstron Color_PN": "", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#EB4444", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Printing", "Project": "16G Moss", "Manufacturing Methods": "Pad Print", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Pantone 2174 C (Blue - Cold Inlet)", "Wstron Color_PN": "", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#4471EB", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Printing", "Project": "16G Moss", "Manufacturing Methods": "Pad Print", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Pantone 185 C (Red - Hot Outlet)", "Wstron Color_PN": "", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#D41717", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "HPE", "Material": "Plastic", "Project": "DL320,DL145,DL340,DL325,DL345,G131U", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "Karrie", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "HP Jack Black/6009-0337", "Wstron Color_PN": "ACS-S0262", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "Bayblend(FR6005) ,MAKROLON", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "HPE", "Material": "Plastic", "Project": "DL320,DL145,DL325,DL345,G131U", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "Karrie", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "HP Touch point Blue SP-1348", "Wstron Color_PN": "ACS-S5029", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0077FF", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "HPE", "Material": "Plastic", "Project": "DL320,DL325,G131U,", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC", "OEM Vendor": "Karrie", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "MAKROLON", "Light Source": "CWF/F2", "Customer Color Name_PN": "HP Touch point Blue SP-1348", "Wstron Color_PN": "ACS-S5029", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0077FF", "Material Supplier": "Sabic (Lexan 925)", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "HPE", "Material": "Plastic", "Project": "DL145", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC/ABS-FR3200TV-704776", "OEM Vendor": "AVC", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "HP OOV Gray 3 /6009-0308", "Wstron Color_PN": "ACS-S0477", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#A8A8A8", "Material Supplier": "Covestro", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "HPE", "Material": "Plastic", "Project": "WickieB300(見P.S),Arcana", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "鴻昌", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "Wickie B300是APD案子, Arcana 是完全拿WICKIE B300殼子來做", "Light Source": "", "Customer Color Name_PN": "Raven Black NV008", "Wstron Color_PN": "ACS-S0355", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "HPE", "Material": "Metal", "Project": "DL320,DL145,DL340e", "Manufacturing Methods": "Powder Coating", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "Karrie", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "HP Jack Black/6009-0336", "Wstron Color_PN": "ACS-S0263PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "HPE", "Material": "Metal", "Project": "DL340e", "Manufacturing Methods": "Powder Coating", "Material SPEC/Apply to.": "ZA-5", "OEM Vendor": "foxcon", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Hot Pluggable Red /sp-1347", "Wstron Color_PN": "ACS-1012PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#C90808", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "HPE", "Material": "Metal", "Project": "DL340e", "Manufacturing Methods": "Powder Coating", "Material SPEC/Apply to.": "ZA-5", "OEM Vendor": "foxcon", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "Sand blasting finish  + Cr PLATING CHROMATE FOR POST PROCEDURE", "Light Source": "", "Customer Color Name_PN": "Penaga silver/sp-1331", "Wstron Color_PN": "ACS-S8187PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#C4C4C4", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "HPE", "Material": "Metal", "Project": "WickieB300(見P.S),Arcana", "Manufacturing Methods": "Anodizing", "Material SPEC/Apply to.": "Aluminium", "OEM Vendor": "鴻昌", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Raven Black NV 008(9°±3° Gu)", "Wstron Color_PN": "ACS-S0375E", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "HPE", "Material": "Metal", "Project": "WickieB300(見P.S),Arcana", "Manufacturing Methods": "Powder Coating", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "鴻昌", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Raven Black NV 008(9°±3° Gu)", "Wstron Color_PN": "ACS-S0376PE-2", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "HPE", "Material": "Metal", "Project": "WickieB300(見P.S),Arcana", "Manufacturing Methods": "Liquid Coating", "Material SPEC/Apply to.": "ZA8", "OEM Vendor": "鴻昌", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "Liquid Paint", "Light Source": "", "Customer Color Name_PN": "Raven Black NV008 (9°±2° Gu)", "Wstron Color_PN": "ACS-S0491T", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Yama Kyo", "Material": "Plastic", "Project": "CHITA P3 (Inside Parts)", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "PRIVER", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "COLOR: Similar PMS BLACK C                     SPI:B2 /Matt", "Light Source": "D65", "Customer Color Name_PN": "Credo Black", "Wstron Color_PN": "ACS-S0425", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "SABIC(CYCOLOY), Resin CX7240", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Yama Kyo", "Material": "Plastic", "Project": "Yamazaki /Kyoto /Ubiquiti 6512-32R /upscale ai 6512-32R /CHITA P3", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "品固", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "COLOR: Similar to Pantone 200U", "Light Source": "D65", "Customer Color Name_PN": "Wistron Red", "Wstron Color_PN": "ACS-S1020", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#C20606", "Material Supplier": "Sabic (C2950)", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Yama Kyo", "Material": "Metal", "Project": "CHITA P3", "Manufacturing Methods": "Powder Painting", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "PRIVER", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "COLOR: Similar PMS BLACK C             TEXTURE: MT11010", "Light Source": "D65", "Customer Color Name_PN": "Credo Black", "Wstron Color_PN": "ACS-S0475PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Yama Kyo", "Material": "Metal", "Project": "CHITA P3", "Manufacturing Methods": "Powder Painting", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "PRIVER", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "COLOR: Similar PANTONE 2144C         TEXTURE: MT11010", "Light Source": "D65", "Customer Color Name_PN": "Credo Blue", "Wstron Color_PN": "ACS-S5050PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#2E50E6", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Yama Kyo", "Material": "Metal", "Project": "Yamazaki (Rev.A~E) /upscale ai 6512-32R /Miramar /Dark Star-A232AR2", "Manufacturing Methods": "Black Painting", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "PRIVER", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "COLOR: Similar PMS BLACK C             TEXTURE: MT11010 /MT11020", "Light Source": "D65", "Customer Color Name_PN": "Wistron Black", "Wstron Color_PN": "ACS-S0424PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Yama Kyo", "Material": "Metal", "Project": "Yamazaki (Rev.F~) /Kyoto /Ubiquiti 6512-32R /upscale ai 6512-32R", "Manufacturing Methods": "Black Painting", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "PRIVER", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "COLOR: Similar PMS BLACK C         TEXTURE: MT11010", "Light Source": "D65", "Customer Color Name_PN": "Wistron Black-02", "Wstron Color_PN": "ACS-S0424PE-02", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Yama Kyo", "Material": "Metal", "Project": "Yamazaki (Rev.A~E) /upscale ai 6512-32R", "Manufacturing Methods": "Light Gray Painting", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "PRIVER", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "COLOR: 19537-3(similar to PMS 420 C) TEXTURE: 淺灰砂紋", "Light Source": "D65", "Customer Color Name_PN": "Light Gray", "Wstron Color_PN": "ACS-S0500PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#C4C4C4", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Yama Kyo", "Material": "Metal", "Project": "Miramar /Dark Star-A232AR2", "Manufacturing Methods": "Silver Powder Painting", "Material SPEC/Apply to.": "ZA8", "OEM Vendor": "AVC", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "#120 Iron Powder Blasting", "Light Source": "D65", "Customer Color Name_PN": "Silver", "Wstron Color_PN": "ACS-S8232PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#DBDBDB", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Yama Kyo", "Material": "Metal", "Project": "Miramar /Dark Star-A232AR2", "Manufacturing Methods": "Anodized", "Material SPEC/Apply to.": "AL6063 T6", "OEM Vendor": "AVC", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "#120 Iron Powder Blasting", "Light Source": "D65", "Customer Color Name_PN": "Anodized natura Silver", "Wstron Color_PN": "ACS-S8209E", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#C4C4C4", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Yama Kyo", "Material": "Metal", "Project": "North Island 4U", "Manufacturing Methods": "Black Powder Painting", "Material SPEC/Apply to.": "ZA8", "OEM Vendor": "PRIVER", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "#120 Iron Powder Blasting                      COLOR: Similar PMS BLACK C", "Light Source": "D65", "Customer Color Name_PN": "Black 03", "Wstron Color_PN": "ACS-S0486PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Yama Kyo", "Material": "Metal", "Project": "North Island 4U (EAR)", "Manufacturing Methods": "Black electrophoresis (黑色電著)", "Material SPEC/Apply to.": "AL6063 T5", "OEM Vendor": "PRIVER", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "#120 Iron Powder Blasting", "Light Source": "D65", "Customer Color Name_PN": "Black ED", "Wstron Color_PN": "ACS-S0490ED", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Yama Kyo", "Material": "Metal", "Project": "North Island 4U (HANDLE on Ear)", "Manufacturing Methods": "Black Anodized  (黑色陽極)", "Material SPEC/Apply to.": "AL6063 T5", "OEM Vendor": "SOUTHCO", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "D65", "Customer Color Name_PN": "Black Anodized", "Wstron Color_PN": "ANODIZE BLACK", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Yama Kyo", "Material": "Plastic", "Project": "Yamazak /Ubiquiti 6512-32R /upscale ai 6512-32R", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "ABS", "OEM Vendor": "PRIVER", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "COLOR: Similar PMS BLACK C TEXTURE: MT11010", "Light Source": "D65", "Customer Color Name_PN": "Wistron Black", "Wstron Color_PN": "ACS-S0425", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Yama Kyo", "Material": "Plastic", "Project": "North Island 4U /Miramar /Dark Star-A232AR2", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "AVC /PRIVER", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "COLOR: Similar PMS BLACK C TEXTURE: MT11020", "Light Source": "D65", "Customer Color Name_PN": "Wistron Black", "Wstron Color_PN": "ACS-S0425", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "Sabic C6600", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Yama Kyo", "Material": "Plastic", "Project": "Yamazaki /Kyoto /Ubiquiti 6512-32R /upscale ai 6512-32R", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "品固", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "COLOR: Similar to Pantone 200U", "Light Source": "D65", "Customer Color Name_PN": "Wistron Red", "Wstron Color_PN": "ACS-S1020", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#C90808", "Material Supplier": "Sabic C2950", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Yama Kyo", "Material": "Plastic", "Project": "Yamazaki /Kyoto /Ubiquiti 6512-32R /upscale ai 6512-32R", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "PRIVER", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "COLOR: Similar to Pantone 285C/HPE TOUCH POINT BLUE SP-1348", "Light Source": "D65", "Customer Color Name_PN": "Wistron Black", "Wstron Color_PN": "ACS-S5049", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "Sabic C2950", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Plastic", "Project": "Used in almost all Dell projects", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC - ABS", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Standard Black - DPN: PH202", "Wstron Color_PN": "ACS-S0194", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Plastic", "Project": "Used in almost all Dell projects", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Access Blue PMS 659C (Spec R4104)", "Wstron Color_PN": "ACS-S5027", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#BEDAF8", "Material Supplier": "", "image": "/images/pms-659c.png", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Plastic", "Project": "15G: Steeda, Roadster", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "Nylon", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Access Blue, PMS 659C", "Wstron Color_PN": "ACS-S5027", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#BEDAF8", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Plastic", "Project": "15G: Steeda (Turtle Shell)", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Pantone T225-1-5 (Transparent light blue)", "Wstron Color_PN": "", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#D4F3FF", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Plastic", "Project": "17G: Rack ear housing, E1 carrier, Palo Air. 18G: Rack ear", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ABS/ PC", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Rustic Pewter Gery - DPN: COL000199", "Wstron Color_PN": "ACS-S0449", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#B6B6B6", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Plastic", "Project": "15G: Minotaur-R240/R340 /T130/T340 15G: Cota- R250/R350/T140/T350", "Manufacturing Methods": "Double Injection", "Material SPEC/Apply to.": "PC-ABC+TPU", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Black + Translucent (LED)  (Consign part)", "Wstron Color_PN": "ACS-S0194", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Plastic", "Project": "", "Manufacturing Methods": "Double Injection", "Material SPEC/Apply to.": "", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Black + Translucent (LED)  (Consign part)", "Wstron Color_PN": "TPU (NO PN)", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#FFFFFF", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Plastic", "Project": "Cota: T350", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ ABS", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Apollo Black - DPN: COL000880", "Wstron Color_PN": "ACS-S0410", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#9E9E9E", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Plastic", "Project": "Cota: T350", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Sky Blue - DPN: COL000459", "Wstron Color_PN": "ACS-S5043", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#193391", "Material Supplier": "", "image": "/images/sky-blue.png", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Metal", "Project": "17G: 1U and 2U bezel.", "Manufacturing Methods": "Powder Coating", "Material SPEC/Apply to.": "SGCC, SUS", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Cloud Titanium - DPN: COL001558", "Wstron Color_PN": "", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#969696", "Material Supplier": "Tiger", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Metal", "Project": "17G: 1U and 2U bezel, Slam latch, Palo Air (HPM sled handle)", "Manufacturing Methods": "Powder Coating", "Material SPEC/Apply to.": "SGCC, Aluminum", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Cloud Silver - DPN: COL001557", "Wstron Color_PN": "", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#DBDBDB", "Material Supplier": "PPG", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Metal", "Project": "Palo Air Handle", "Manufacturing Methods": "Powder Coating", "Material SPEC/Apply to.": "Aluminum alloy", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "(NEW) Cloud Silver - DPN: ??", "Wstron Color_PN": "", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#DBDBDB", "Material Supplier": "Akzo Nobel", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Metal", "Project": "17G: 1U and 2U bezel, Slam latch, Palo Air, Palo DLC, Belton, Button", "Manufacturing Methods": "Composite Machining", "Material SPEC/Apply to.": "Aluminum alloy", "OEM Vendor": "卓坤, 瑩凡 阿發", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "噴砂鈍化封閉防指紋 (外觀件)", "Wstron Color_PN": "", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#C4C4C4", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Metal", "Project": "Used in almost all Dell projects", "Manufacturing Methods": "Composite Machining", "Material SPEC/Apply to.": "Aluminum alloy", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "噴砂鈍化封閉 (非外觀件)", "Wstron Color_PN": "", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#C4C4C4", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Metal", "Project": "Cota: T350", "Manufacturing Methods": "Powder Coating", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Spectrum Silver Matte DPN: COL001181", "Wstron Color_PN": "ACS-S8215PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#C9C9C9", "Material Supplier": "Tiger", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Metal", "Project": "Earl Grey (abandon)", "Manufacturing Methods": "Anodized", "Material SPEC/Apply to.": "AL5052", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Stratus silver", "Wstron Color_PN": "", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#E0E0E0", "Material Supplier": "YZC", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Rosa", "Material": "Metal", "Project": "Earl Grey (abandon)", "Manufacturing Methods": "Anodized", "Material SPEC/Apply to.": "AL6063", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "", "Customer Color Name_PN": "Stratus silver", "Wstron Color_PN": "", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#E0E0E0", "Material Supplier": "YZC", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Plastic", "Project": "Tornado, Thunder, Gamut", "Manufacturing Methods": "Raw material", "Material SPEC/Apply to.": "PP", "OEM Vendor": "FRD", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "檢驗規範lab: 93.2 -0.43 -1.04", "Light Source": "CWF/F2", "Customer Color Name_PN": "WHITE(COVESTRO 010111)", "Wstron Color_PN": "ACS-S0483", "WZS_L": "92.89", "WZS_a": "-0.71", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#FFFFFF", "Material Supplier": "Covertro", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": "-0.17"}, {"Brand": "Cindy", "Material": "Plastic", "Project": "Tornado, Thunder, Gamut, Avatar", "Manufacturing Methods": "Raw material", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "FRD/品固", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO BURGUNDY", "Wstron Color_PN": "ACS-S2026", "WZS_L": "37.77", "WZS_a": "15.68", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#B02807", "Material Supplier": "BAYBLEND", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": "1.87"}, {"Brand": "Cindy", "Material": "Plastic", "Project": "Pegasus, North Island", "Manufacturing Methods": "Raw material", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "UNEEC/PEIVER", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "Similar to PMS BLACK C", "Wstron Color_PN": "ACS-S0425", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "SABIC C6600", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Plastic", "Project": "Aulani-2U, M7 1U/2U, M8 1U/ 2U", "Manufacturing Methods": "Raw material", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "UNEEC/LY/Amtek", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "標準差值錶NC30", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO Smoke", "Wstron Color_PN": "ACS-S0302", "WZS_L": "37.17", "WZS_a": "0.04", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#3B3B3B", "Material Supplier": "SABIC C6200/ WAM NC85", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": "-1.00"}, {"Brand": "Cindy", "Material": "Plastic", "Project": "Aulani-2U, M7 1U/2U, M8 1U/ 2U", "Manufacturing Methods": "Raw material", "Material SPEC/Apply to.": "ABS", "OEM Vendor": "LY/Amtek", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO Smoke", "Wstron Color_PN": "ACS-S0302-02", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#3B3B3B", "Material Supplier": "奇美", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Plastic", "Project": "Aulani-2U", "Manufacturing Methods": "Raw material", "Material SPEC/Apply to.": "PP", "OEM Vendor": "Amtek", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO Smoke", "Wstron Color_PN": "ACS-S0302-03", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#3B3B3B", "Material Supplier": "RPT 100FR", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Plastic", "Project": "Aulani-2U", "Manufacturing Methods": "Raw material", "Material SPEC/Apply to.": "Silicon Rubber", "OEM Vendor": "順陽", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO Smoke", "Wstron Color_PN": "ACS-S04341", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "SILICONE 70°", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Plastic", "Project": "Aulani-2U, M7 1U/2U, M8 1U/ 2U, Avatar, Mustang", "Manufacturing Methods": "Raw material", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "UNEEC/Chenbro/Amtek", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO Slate Blue", "Wstron Color_PN": "ACS-S5040", "WZS_L": "55.96", "WZS_a": "-0.41", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#226EA1", "Material Supplier": "SABIC C6200/WAM NC85", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": "-27.97"}, {"Brand": "Cindy", "Material": "Plastic", "Project": "Aulani-2U, M7 1U/2U, M8 1U/ 2U", "Manufacturing Methods": "Raw material", "Material SPEC/Apply to.": "PP", "OEM Vendor": "UNEEC", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO Slate Blue", "Wstron Color_PN": "ACS-S5040-02", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#226EA1", "Material Supplier": "RPT 100FR", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Plastic", "Project": "Aulani-2U, M7 1U/2U, M8 1U/ 2U, Avatar", "Manufacturing Methods": "Raw material", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "Amtek", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO Corporate Satin Aluminum", "Wstron Color_PN": "ACS-S0339", "WZS_L": "81.99", "WZS_a": "-0.28", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#616161", "Material Supplier": "Sabic Cycoloy C2950HF/WAN NC30", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": "1.69"}, {"Brand": "Cindy", "Material": "Plastic", "Project": "Mustang", "Manufacturing Methods": "Raw material", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "Chenbro", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO Smoke", "Wstron Color_PN": "ACS-S0302-04", "WZS_L": "36.56", "WZS_a": "-0.58", "WZS_B": "", "WZS_Gloss": "5±1", "Wstron Color HEX": "#3B3B3B", "Material Supplier": "WAN NC85", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": "0.80"}, {"Brand": "Cindy", "Material": "Plastic", "Project": "Mustang", "Manufacturing Methods": "Raw material", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "Chenbro/Sabic C6200", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO Lime Green", "Wstron Color_PN": "ACS-S4028", "WZS_L": "77.50", "WZS_a": "-26.72", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#62F25A", "Material Supplier": "WAN NC85", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": "62.18"}, {"Brand": "Cindy", "Material": "Plastic", "Project": "Mustang", "Manufacturing Methods": "Raw material", "Material SPEC/Apply to.": "PC+ABS", "OEM Vendor": "Chenbro", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO Corporate Satin Aluminum", "Wstron Color_PN": "ACS-S0339-02", "WZS_L": "81.23", "WZS_a": "-0.43", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#616161", "Material Supplier": "WAN NC85", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": "2.01"}, {"Brand": "Cindy", "Material": "Metal", "Project": "M7 1U/2U, M8 1U/ 2U", "Manufacturing Methods": "Powder coating", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "Amtek", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO Smoke", "Wstron Color_PN": "ACS-S0340PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#3D3D3D", "Material Supplier": "Akzo", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Metal", "Project": "North Island", "Manufacturing Methods": "Powder coating", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "PEIVER", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "Similar to PMS Black C", "Wstron Color_PN": "ACS-S0486PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#0D0D0D", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Metal", "Project": "Lightsaber", "Manufacturing Methods": "Powder coating", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "UNEEC", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO OSLO SNOW/95-1383S-01", "Wstron Color_PN": "ACS-S0451PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#F7F5F5", "Material Supplier": "Akzo:EB511C", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Metal", "Project": "Pegasus, Aulani-2U, M7 1U/2U, M8 1U/ 2U, Avatar", "Manufacturing Methods": "Powder coating", "Material SPEC/Apply to.": "Die-Casting", "OEM Vendor": "UNEEC/SOUTHCO", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO Satin Aluminum/95-109888-01 Smooth", "Wstron Color_PN": "ACS-S8198PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#E7E7E7", "Material Supplier": "TIGER", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Metal", "Project": "Hydra", "Manufacturing Methods": "Powder coating", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "Bonteck", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "CISCO Corporate Satin Aluminum", "Wstron Color_PN": "ACS-S8233PE-02", "WZS_L": "81.13", "WZS_a": "-0.45", "WZS_B": "0.57", "WZS_Gloss": "10±3", "Wstron Color HEX": "#C4C4C4", "Material Supplier": "TIGER", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Metal", "Project": "Pegasus", "Manufacturing Methods": "Anodized", "Material SPEC/Apply to.": "Die-Casting", "OEM Vendor": "SOUTHCO", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "Anodized Natural", "Wstron Color_PN": "ACS-S8209E", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#B6B6B6", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Metal", "Project": "Pegasus", "Manufacturing Methods": "Anodized", "Material SPEC/Apply to.": "Die-Casting", "OEM Vendor": "SOUTHCO", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "Anodized Black", "Wstron Color_PN": "ACS-S0499E", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#252525", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Cindy", "Material": "Printing", "Project": "M7 1U/2U;M8 1U/ 2U, Aulani-2U", "Manufacturing Methods": "", "Material SPEC/Apply to.": "", "OEM Vendor": "", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "", "Light Source": "CWF/F2", "Customer Color Name_PN": "Low bake Wet Paint(Cisco Satin Aluminum/95-109888-01）", "Wstron Color_PN": "ACS-S8199T", "WZS_L": "83.09", "WZS_a": "-0.44", "WZS_B": "1.21", "WZS_Gloss": "9~15", "Wstron Color HEX": "#DBDBDB", "Material Supplier": "Akzo", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Naomi", "Material": "Plastic", "Project": "Fractal", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC", "OEM Vendor": "Karrie", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "Part:ButtonLiquid PaintPrimer:822-BJS-64483Top coat:822-DJS-64485", "Light Source": "", "Customer Color Name_PN": "Golden Shadow_NV 301 PNT", "Wstron Color_PN": "ACS-S8241PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#E0DEC3", "Material Supplier": "Akzo Nobel", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Naomi", "Material": "Plastic", "Project": "", "Manufacturing Methods": "Injection Molding", "Material SPEC/Apply to.": "PC+ ABS", "OEM Vendor": "Karrie", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "Part:Pull TabRaw material", "Light Source": "", "Customer Color Name_PN": "Pantone 4239C", "Wstron Color_PN": "ACS-S3001", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#E0DEC3", "Material Supplier": "", "image": "/images/img_1776991062941_692.jpg", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Naomi", "Material": "Metal", "Project": "", "Manufacturing Methods": "Die-Casting", "Material SPEC/Apply to.": "AZ91D", "OEM Vendor": "TN-CTC", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "1.Liquid Paint2.Faceplate3.Primer : 822-BJS-64483Top coat : 822-DJS-64485", "Light Source": "", "Customer Color Name_PN": "Golden Shadow_NV 301 PNT", "Wstron Color_PN": "ACS-S8241PE", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#E3E0B8", "Material Supplier": "Akzo Nobel", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Naomi", "Material": "Metal", "Project": "Fractal", "Manufacturing Methods": "Extrusion+CNC", "Material SPEC/Apply to.": "AL 7INR2", "OEM Vendor": "CaseTek", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "1.Anodize2.Handle", "Light Source": "", "Customer Color Name_PN": "Golden Shadow_NV 301", "Wstron Color_PN": "ACS-S8240E", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#E3E0B8", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Naomi", "Material": "Metal", "Project": "Fractal", "Manufacturing Methods": "Stamping", "Material SPEC/Apply to.": "SUS 304", "OEM Vendor": "Karrie", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "1.PVD2.Handle", "Light Source": "", "Customer Color Name_PN": "Golden Shadow_NV 301", "Wstron Color_PN": "ACS-S3008E", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#E3E0B8", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Naomi", "Material": "Metal", "Project": "Fractal", "Manufacturing Methods": "Stamping", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "Karrie", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "1.Powder coating\n2.#EN3KHC", "Light Source": "", "Customer Color Name_PN": "Raven Black_NV 008 PDC", "Wstron Color_PN": "ACS-S0376PE-2", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#2B2B2B", "Material Supplier": "Akzo Nobel", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Naomi", "Material": "Metal", "Project": "", "Manufacturing Methods": "Stamping", "Material SPEC/Apply to.": "SGCC", "OEM Vendor": "Karrie", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "1.Liquid Paint\n2.Bay A and B Trays\n3.One coat : 821-BJS-1433", "Light Source": "", "Customer Color Name_PN": "Raven Black_NV 008 PNT", "Wstron Color_PN": "ACS-S0376PE-3", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#2B2B2B", "Material Supplier": "Akzo Nobel", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Naomi", "Material": "Metal", "Project": "Fractal", "Manufacturing Methods": "Stamping", "Material SPEC/Apply to.": "AL", "OEM Vendor": "Luxshare", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "1.Liquid Paint\n2.Light Pipe Bracket\n3.Primer : 822-BJS-64483KG\nTopcoat : 822-BJS-14872FM", "Light Source": "", "Customer Color Name_PN": "Raven Black_NV 008 PNT", "Wstron Color_PN": "ACS-S0376PE-4", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#2B2B2B", "Material Supplier": "Akzo Nobel", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}, {"Brand": "Naomi", "Material": "Printing", "Project": "", "Manufacturing Methods": "Pad Print", "Material SPEC/Apply to.": "AZ91D", "OEM Vendor": "TN-CTC", "WHQ_L": "", "WHQ_a": "", "WHQ_b": "", "WHQ_Gloss": "", "Remark": "Part:Faceplate", "Light Source": "", "Customer Color Name_PN": "PMS 403C", "Wstron Color_PN": "ACS-S3001P", "WZS_L": "", "WZS_a": "", "WZS_B": "", "WZS_Gloss": "", "Wstron Color HEX": "#E3E0B8", "Material Supplier": "", "image": "", "URL": "", "WHQ_FT": "", "WZS_FT": "", "FA_L": "", "FA_a": "", "FA_b": "", "FA_E": "", "FA_Gloss": "", "FA_FT": "", "Finish Applicator": "", "Finish Supplier": "", "Color Images": "", "Sample images": "", "Standards Color": "", "Gloss Units": "", "Customer_L": "", "Customer_a": "", "Customer_b": "", "Customer_Gloss": "", "Customer_FT": "", "Surface Finishing": "", "Customer Color HEX": "", "WZS_E": ""}];
+let cmfAllData = JSON.parse(JSON.stringify(CMF_DEFAULT));
+let cmfFiltered = [...cmfAllData];
+let cmfEditIdx = -1;
+const CMF_DISPLAY_COLS = ['Brand','Material','Project','Customer Color Name_PN','Wstron Color_PN','Manufacturing Methods','Material SPEC/Apply to.','OEM Vendor','Material Supplier'];
+
+// ── Toast ──
+let toastTimer;
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = 'toast'; }, 3000);
+}
+
+// ── 頁籤切換 ──
+function switchView(viewId, el) {
+  document.querySelectorAll('.content-view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(viewId).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('abbr-actions').style.display = (viewId === 'abbr-view') ? 'flex' : 'none';
+  document.getElementById('cmf-actions').style.display  = (viewId === 'cmf-view')  ? 'flex' : 'none';
+  if (viewId === 'level-view') {} // 靜態圖片，無需渲染
+}
+
+// ═══════════════════════════════════════════════════
+// 縮寫查詢邏輯
+// ═══════════════════════════════════════════════════
+function parseAbbrWorkbook(wb) {
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  const maxRow = range.e.r + 1, maxCol = range.e.c + 1;
+  const result = {}, HEADER_ROW = 1;
+  const catCols = [];
+  for (let c = 0; c < maxCol; c++) {
+    const cell = ws[XLSX.utils.encode_cell({r: HEADER_ROW, c})];
+    if (cell && cell.v && String(cell.v).trim()) catCols.push({col: c, name: String(cell.v).trim()});
   }
-  function fillSelect(sel,vals){
-    vals.forEach(function(v){
-      var o=document.createElement('option'); o.value=v; o.textContent=v; sel.appendChild(o);
-    });
-  }
-  fillSelect(fBrand, uniq('Brand'));
-  fillSelect(fMat, uniq('Material'));
-  fillSelect(fMethod, uniq('Manufacturing Methods'));
-
-  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-  function hex(r){var h=(r['Wstron Color HEX']||r['Customer Color HEX']||'').trim(); return /^#[0-9A-Fa-f]{6}$/.test(h)?h:''}
-
-  function apply(){
-    var q=search.value.trim().toLowerCase();
-    var b=fBrand.value, m=fMat.value, mm=fMethod.value;
-    filtered=DATA.filter(function(r){
-      if(b && (r['Brand']||'')!==b) return false;
-      if(m && (r['Material']||'')!==m) return false;
-      if(mm && (r['Manufacturing Methods']||'')!==mm) return false;
-      if(q){
-        var hay=[r['Wstron Color_PN'],r['Customer Color Name_PN'],r['Project'],
-          r['Material Supplier'],r['OEM Vendor'],r['Wstron Color HEX'],r['Remark']]
-          .join(' ').toLowerCase();
-        if(hay.indexOf(q)<0) return false;
+  catCols.forEach(({col, name}) => {
+    const fullCol = col + 1, entries = [];
+    for (let r = HEADER_ROW + 1; r < maxRow; r++) {
+      const abbrCell = ws[XLSX.utils.encode_cell({r, c: col})];
+      const fullCell = ws[XLSX.utils.encode_cell({r, c: fullCol})];
+      const abbr = abbrCell ? String(abbrCell.v).trim() : '';
+      const full = fullCell ? String(fullCell.v).trim() : '';
+      let zh = '';
+      if (r + 1 < maxRow) {
+        const na = ws[XLSX.utils.encode_cell({r: r+1, c: col})];
+        const nf = ws[XLSX.utils.encode_cell({r: r+1, c: fullCol})];
+        if ((!na || !String(na.v).trim()) && nf && String(nf.v).trim()) zh = String(nf.v).trim();
       }
-      return true;
-    });
-    render();
-  }
-
-  function render(){
-    var tb=$('cmf-tbody'); tb.innerHTML='';
-    filtered.forEach(function(r){
-      var tr=document.createElement('tr');
-      tr.onclick=function(){openDetail(r)};
-      var h=hex(r);
-      var sw=h?'<span class="swatch" style="background:'+h+'"></span>':'<span class="swatch" style="background:repeating-linear-gradient(45deg,#eee,#eee 4px,#fafafa 4px,#fafafa 8px)"></span>';
-      tr.innerHTML=
-        '<td>'+esc(r['Brand'])+'</td>'+
-        '<td><span class="tag">'+esc(r['Material'])+'</span></td>'+
-        '<td class="muted">'+esc(r['Project']||'—')+'</td>'+
-        '<td class="colorcell">'+sw+'<span class="pn">'+esc(r['Wstron Color_PN']||'—')+'</span></td>'+
-        '<td>'+esc(r['Customer Color Name_PN']||'—')+'</td>'+
-        '<td>'+esc(r['Manufacturing Methods']||'—')+'</td>'+
-        '<td class="muted">'+esc(r['Material SPEC/Apply to.']||'—')+'</td>'+
-        '<td class="muted">'+esc(r['Material Supplier']||r['OEM Vendor']||'—')+'</td>';
-      tb.appendChild(tr);
-    });
-    $('cmf-count').textContent=filtered.length+' / '+DATA.length+' 筆';
-    $('cmf-empty').style.display=filtered.length?'none':'block';
-  }
-
-  // ---- detail ----
-  var LAB_SOURCES=[
-    {p:'Customer_',label:'Customer'},{p:'WHQ_',label:'WHQ'},
-    {p:'WZS_',label:'WZS'},{p:'FA_',label:'FA'}
-  ];
-  function val(r,k){var v=r[k]; return (v===''||v==null)?'':v}
-  function labFor(r,pre){
-    var b = pre==='WZS_' ? (val(r,'WZS_B')!==''?val(r,'WZS_B'):val(r,'WZS_b')) : val(r,pre+'b');
-    var parts=[];
-    if(val(r,pre+'L')!=='') parts.push('L '+val(r,pre+'L'));
-    if(val(r,pre+'a')!=='') parts.push('a '+val(r,pre+'a'));
-    if(b!=='') parts.push('b '+b);
-    if(val(r,pre+'E')!=='') parts.push('ΔE '+val(r,pre+'E'));
-    if(val(r,pre+'Gloss')!=='') parts.push('Gloss '+val(r,pre+'Gloss'));
-    if(val(r,pre+'FT')!=='') parts.push('FT '+val(r,pre+'FT'));
-    return parts;
-  }
-
-  window.openDetail=function(r){
-    var h=hex(r);
-    $('d-swatch').style.background = h||'repeating-linear-gradient(45deg,#e6e6e6,#e6e6e6 5px,#f6f6f6 5px,#f6f6f6 10px)';
-    $('d-title').textContent = r['Customer Color Name_PN'] || r['Wstron Color_PN'] || '(未命名)';
-    $('d-sub').textContent = [r['Wstron Color_PN'],r['Wstron Color HEX']].filter(Boolean).join('  ·  ');
-
-    var body=$('cmf-detail-body');
-    var used={};
-    function row(label,key){
-      used[key]=1;
-      var v=r[key];
-      if(v===''||v==null) return '';
-      return '<dt>'+esc(label)+'</dt><dd>'+esc(v)+'</dd>';
+      if (abbr) entries.push({abbr, full, zh});
     }
-    var identity='<dl class="kv">'+
-      row('客戶 Brand','Brand')+row('材質 Material','Material')+
-      row('專案 Project','Project')+row('工法','Manufacturing Methods')+
-      row('底材 SPEC','Material SPEC/Apply to.')+row('表面處理','Surface Finishing')+
-      '</dl>';
-    var color='<dl class="kv">'+
-      row('Wistron 色號','Wstron Color_PN')+row('Wistron HEX','Wstron Color HEX')+
-      row('客戶色名/PN','Customer Color Name_PN')+row('客戶 HEX','Customer Color HEX')+
-      row('光源','Light Source')+row('標準色板','Standards Color')+row('光泤','Gloss Units')+
-      '</dl>';
-    var supply='<dl class="kv">'+
-      row('OEM Vendor','OEM Vendor')+row('材料供應商','Material Supplier')+
-      row('表面處理施作','Finish Applicator')+row('表面處理供應商','Finish Supplier')+
-      '</dl>';
+    if (entries.length) result[name] = entries;
+  });
+  return result;
+}
 
-    LAB_SOURCES.forEach(function(s){
-      ['L','a','b','B','E','Gloss','FT'].forEach(function(x){used[s.p+x]=1});
-    });
-    var labCards='';
-    LAB_SOURCES.forEach(function(s){
-      var parts=labFor(r,s.p);
-      if(parts.length){
-        labCards+='<div class="labcard"><div class="src">'+s.label+'</div><div class="vals">'+esc(parts.join('  '))+'</div></div>';
+document.getElementById('abbr-file-input').addEventListener('change', function() {
+  if (!this.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      const nd = parseAbbrWorkbook(wb);
+      const total = Object.values(nd).reduce((s,a)=>s+a.length,0);
+      if (!total) throw new Error('empty');
+      ABBR_DATA = nd; abbrActivecat = null; abbrQuery = ''; abbrOpenEntries.clear();
+      document.getElementById('search').value = '';
+      document.getElementById('clear-btn').style.display = 'none';
+      renderAbbr();
+      showToast('✓ 已載入 ' + Object.keys(ABBR_DATA).length + ' 個分類，共 ' + total + ' 筆縮寫');
+    } catch { showToast('解析失敗：請確認 Excel 格式（第 2 列為分類標題）', true); }
+  };
+  reader.readAsArrayBuffer(this.files[0]);
+  this.value = '';
+});
+
+// Drag & Drop（縮寫）
+let dragCounter = 0;
+document.addEventListener('dragenter', e => {
+  if (e.dataTransfer.types.includes('Files')) { dragCounter++; document.getElementById('drop-overlay').classList.add('active'); }
+});
+document.addEventListener('dragleave', () => { if (--dragCounter <= 0) { dragCounter = 0; document.getElementById('drop-overlay').classList.remove('active'); } });
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => {
+  e.preventDefault(); dragCounter = 0; document.getElementById('drop-overlay').classList.remove('active');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.match(/\.xlsx?$/i)) document.getElementById('abbr-file-input').dispatchEvent(Object.assign(new Event('change'), {target:{files:[file]}}));
+});
+
+function hl(text, q) {
+  if (!q || !text) return text||'';
+  return text.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')', 'gi'), '<mark>$1</mark>');
+}
+
+function renderAbbrCats() {
+  const grid = document.getElementById('cat-grid'); grid.innerHTML = '';
+  Object.entries(ABBR_DATA).forEach(([cat, entries]) => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn' + (abbrActivecat === cat ? ' active' : '');
+    btn.innerHTML = '<span>' + cat + '</span><span class="count">' + entries.length + '</span>';
+    btn.onclick = () => { abbrActivecat = (abbrActivecat===cat)?null:cat; abbrQuery=''; document.getElementById('search').value=''; document.getElementById('clear-btn').style.display='none'; renderAbbr(); };
+    grid.appendChild(btn);
+  });
+}
+
+function renderAbbr() {
+  renderAbbrCats();
+  const container = document.getElementById('results');
+  const q = abbrQuery.toLowerCase().trim();
+  if (!abbrActivecat && !q) { container.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#bbb;font-size:14px;">請選擇分類或輸入關鍵字搜尋</div>'; return; }
+  const cats = abbrActivecat ? [abbrActivecat] : Object.keys(ABBR_DATA);
+  const sections = [];
+  cats.forEach(cat => {
+    let entries = ABBR_DATA[cat];
+    if (q) entries = entries.filter(e => e.abbr.toLowerCase().includes(q) || (e.full&&e.full.toLowerCase().includes(q)) || (e.zh&&e.zh.toLowerCase().includes(q)));
+    if (entries.length) sections.push({cat, entries});
+  });
+  if (!sections.length) { container.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa;">找不到符合的內容</div>'; return; }
+  container.innerHTML = sections.map(({cat, entries}) => `
+    <div class="section">
+      <div class="section-header">${cat}</div>
+      ${entries.map((e,i) => { const id=cat+'_'+i, isOpen=abbrOpenEntries.has(id); return `
+        <div class="entry ${isOpen?'open':''}" data-id="${id}">
+          <div class="entry-header" onclick="toggleAbbr('${id}')">
+            <span class="abbr-tag">${hl(e.abbr,abbrQuery)}</span>
+            <span class="full-preview">${hl(e.full,abbrQuery)}</span>
+            <span class="chevron">▶</span>
+          </div>
+          <div class="entry-detail">
+            <div class="detail-label">英文全稱</div><div class="detail-val">${hl(e.full,abbrQuery)}</div>
+            ${e.zh?`<div class="detail-label">中文說明</div><div class="detail-val">${hl(e.zh,abbrQuery)}</div>`:''}
+          </div>
+        </div>`; }).join('')}
+    </div>`).join('');
+}
+
+function toggleAbbr(id) { abbrOpenEntries.has(id)?abbrOpenEntries.delete(id):abbrOpenEntries.add(id); renderAbbr(); }
+
+document.getElementById('search').addEventListener('input', function() {
+  abbrQuery = this.value; if (abbrQuery) abbrActivecat = null; abbrOpenEntries.clear();
+  document.getElementById('clear-btn').style.display = abbrQuery ? 'flex' : 'none'; renderAbbr();
+});
+document.getElementById('clear-btn').addEventListener('click', function() {
+  document.getElementById('search').value=''; abbrQuery=''; this.style.display='none'; renderAbbr();
+});
+
+// 新增縮寫 Modal
+function openAddModal() {
+  const sel = document.getElementById('add-cat');
+  sel.innerHTML = Object.keys(ABBR_DATA).map(c=>`<option value="${c}">${c}</option>`).join('');
+  if (abbrActivecat) sel.value = abbrActivecat;
+  ['add-abbr','add-full','add-zh','add-newcat'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('add-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('add-abbr').focus(),100);
+}
+function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
+document.getElementById('add-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('add-modal')) closeAddModal(); });
+
+function submitAdd() {
+  const newCat = document.getElementById('add-newcat').value.trim();
+  const cat = newCat || document.getElementById('add-cat').value;
+  const abbr = document.getElementById('add-abbr').value.trim();
+  const full = document.getElementById('add-full').value.trim();
+  const zh = document.getElementById('add-zh').value.trim();
+  if (!cat) { showToast('請選擇或輸入分類', true); return; }
+  if (!abbr) { showToast('縮寫不能為空', true); return; }
+  if (!full) { showToast('英文全稱不能為空', true); return; }
+  if (!ABBR_DATA[cat]) ABBR_DATA[cat] = [];
+  if (ABBR_DATA[cat].some(e=>e.abbr.toLowerCase()===abbr.toLowerCase())) { showToast('此分類已有相同縮寫', true); return; }
+  ABBR_DATA[cat].push({abbr, full, zh});
+  closeAddModal(); abbrActivecat=cat; abbrQuery=''; abbrOpenEntries.clear();
+  document.getElementById('search').value=''; document.getElementById('clear-btn').style.display='none';
+  renderAbbr(); showToast('✓ 已新增「'+abbr+'」到 '+cat);
+}
+
+// ═══════════════════════════════════════════════════
+// ③ CMF 總表
+// ═══════════════════════════════════════════════════
+document.getElementById('cmf-file-input').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const isCSV = file.name.toLowerCase().endsWith('.csv');
+      const wb = isCSV
+        ? XLSX.read(e.target.result, {type:'string'})
+        : XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:''});
+      if (!rows.length) throw new Error('empty');
+      cmfAllData = rows; cmfFiltered = [...rows];
+      cmfEditIdx = -1;
+      cmfPopulateFilters();
+      renderCmfTable(cmfFiltered);
+      document.getElementById('cmf-filters').style.display = 'flex';
+      document.getElementById('cmf-summary').style.display = 'flex';
+      document.getElementById('cmf-export-btn').style.display = 'inline-flex';
+      showToast('✓ CMF 資料已載入，共 ' + rows.length + ' 筆');
+    } catch { showToast('CMF Excel 解析失敗', true); }
+  };
+  if (file.name.toLowerCase().endsWith('.csv')) reader.readAsText(file, 'utf-8');
+  else reader.readAsArrayBuffer(file);
+  this.value = '';
+});
+
+function cmfPopulateFilters() {
+  const brands=new Set(), materials=new Set(), projects=new Set();
+  cmfAllData.forEach(row => {
+    if (row['Brand']) brands.add(String(row['Brand']));
+    if (row['Material']) materials.add(String(row['Material']));
+    if (row['Project']) projects.add(String(row['Project']));
+  });
+  cmfFillSelect('cmf-f-brand', brands);
+  cmfFillSelect('cmf-f-material', materials);
+  cmfFillSelect('cmf-f-project', projects);
+}
+
+function cmfFillSelect(id, set) {
+  const sel = document.getElementById(id);
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">全部</option>';
+  Array.from(set).sort().forEach(v => {
+    const opt = document.createElement('option'); opt.value = v; opt.textContent = v;
+    if (v===cur) opt.selected=true; sel.appendChild(opt);
+  });
+}
+
+function cmfApplyFilters() {
+  const brand = document.getElementById('cmf-f-brand').value;
+  const material = document.getElementById('cmf-f-material').value;
+  const project = document.getElementById('cmf-f-project').value;
+  const kw = document.getElementById('cmf-search').value.trim().toLowerCase();
+  cmfFiltered = cmfAllData.filter(row => {
+    const mb = !brand || String(row['Brand']||'')=== brand;
+    const mm = !material || String(row['Material']||'')===material;
+    const mp = !project || String(row['Project']||'')===project;
+    const mk = !kw || Object.values(row).some(v=>String(v).toLowerCase().includes(kw));
+    return mb&&mm&&mp&&mk;
+  });
+  renderCmfTable(cmfFiltered);
+}
+
+function cmfReset() {
+  document.getElementById('cmf-f-brand').value='';
+  document.getElementById('cmf-f-material').value='';
+  document.getElementById('cmf-f-project').value='';
+  document.getElementById('cmf-search').value='';
+  cmfFiltered=[...cmfAllData]; renderCmfTable(cmfFiltered);
+}
+
+function renderCmfTable(data) {
+  const container = document.getElementById('cmf-content');
+  const summaryText = document.getElementById('cmf-summary-text');
+  if (summaryText) summaryText.textContent = '共找到 ' + data.length + ' 筆資料';
+
+  if (!data.length) {
+    container.innerHTML = '<div class="cmf-empty">沒有符合條件的資料</div>';
+    return;
+  }
+
+  let html = '<div class="cmf-table-wrap"><table class="cmf-table"><thead><tr>';
+  CMF_DISPLAY_COLS.forEach(c => { html += '<th>' + c + '</th>'; });
+  html += '<th>詳細</th><th>編輯</th><th>刪除</th></tr></thead><tbody>';
+
+  data.forEach((row, idx) => {
+    html += '<tr>';
+    CMF_DISPLAY_COLS.forEach(col => {
+      let val = row[col] !== undefined ? String(row[col]) : '';
+      let style = '';
+      if (col === 'Wstron Color_PN') {
+        const hex = String(row['Wstron Color HEX'] || '').trim();
+        if (hex) {
+          // decide text color based on luminance
+          const r = parseInt(hex.slice(1,3)||'80',16), g = parseInt(hex.slice(3,5)||'80',16), b = parseInt(hex.slice(5,7)||'80',16);
+          const lum = (0.299*r + 0.587*g + 0.114*b)/255;
+          const tc = lum > 0.5 ? '#000' : '#fff';
+          style = 'background-color:' + hex + ';color:' + tc + ';font-weight:700;text-shadow:none;';
+        }
       }
+      html += style ? '<td style="' + style + '">' + val + '</td>' : '<td>' + val + '</td>';
     });
-    var labSection = labCards ? '<div class="section-label">量測值 Lab / Gloss</div><div class="labgrid">'+labCards+'</div>' : '';
-
-    var others='';
-    used['__i']=1; used['image']=1; used['URL']=1;
-    var extra='';
-    if(r['Remark']) extra+='<dt>Remark</dt><dd>'+esc(r['Remark'])+'</dd>';
-    if(r['URL']) extra+='<dt>URL</dt><dd><a href="'+esc(r['URL'])+'" target="_blank" rel="noopener">'+esc(r['URL'])+'</a></dd>';
-    Object.keys(r).forEach(function(k){
-      if(used[k]) return;
-      var v=r[k]; if(v===''||v==null) return;
-      extra+='<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>';
-    });
-    if(extra) others='<div class="section-label">其他躇訊</div><dl class="kv">'+extra+'</dl>';
-
-    body.innerHTML=
-      '<div class="section-label">基本</div>'+identity+
-      '<div class="section-label">額色</div>'+color+
-      '<div class="section-label">供應商</div>'+supply+
-      labSection+others;
-
-    $('cmf-detail').classList.add('open');
-    document.body.style.overflow='hidden';
-  };
-  window.closeDetail=function(){
-    $('cmf-detail').classList.remove('open');
-    document.body.style.overflow='';
-  };
-  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeDetail()});
-
-  search.addEventListener('input',apply);
-  fBrand.addEventListener('change',apply);
-  fMat.addEventListener('change',apply);
-  fMethod.addEventListener('change',apply);
-  $('cmf-reset').addEventListener('click',function(){
-    search.value=''; fBrand.value=''; fMat.value=''; fMethod.value=''; apply();
+    html += '<td><span class="cmf-act-btn cmf-act-detail" onclick="openCmfDetail(' + idx + ')">詳細' + (String(row['Remark']||'').trim() ? '<span style="color:red;margin-left:2px;">*</span>' : '') + '</span></td>';
+    html += '<td><span class="cmf-act-btn cmf-act-edit" onclick="openCmfEdit(' + idx + ')">編輯</span></td>';
+    html += '<td><button class="cmf-act-delete" onclick="deleteCmfRow(' + idx + ')">刪除</button></td>';
+    html += '</tr>';
   });
 
-  render();
-})();
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+function openCmfDetail(idx) {
+  const row = cmfFiltered[idx];
+  if (!row) return;
+  const g = k => (row[k] !== undefined && row[k] !== null) ? String(row[k]).trim() : '';
+
+  const cHex = g('Customer Color HEX');
+  const wHex = g('Wstron Color HEX');
+  const cSwatch = cHex ? '<span class="color-swatch" style="background:' + cHex + ';"></span>' : '';
+  const wSwatch = wHex ? '<span class="color-swatch" style="background:' + wHex + ';"></span>' : '';
+
+  let html = '<table class="cmf-detail-table">';
+  html += '<tr><th>Brand</th><td>' + g('Brand') + '</td></tr>';
+  html += '<tr><th>C - PN</th><td>' + cSwatch + g('Customer Color Name_PN') + '</td></tr>';
+  html += '<tr><th>W - PN</th><td>' + wSwatch + g('Wstron Color_PN') + '</td></tr>';
+  html += '<tr><th>Material</th><td>' + g('Material') + '</td></tr>';
+  html += '<tr><th>M-Methods</th><td>' + g('Manufacturing Methods') + '</td></tr>';
+  html += '<tr><th>Material SPEC</th><td>' + g('Material SPEC/Apply to.') + '</td></tr>';
+  const fa = g('Finish Applicator') || g('OEM Vendor');
+  const fs = g('Finish Supplier') || g('Material Supplier');
+  if (fa) html += '<tr><th>Finish Applicator</th><td>' + fa + '</td></tr>';
+  if (fs) html += '<tr><th>Finish Supplier</th><td>' + fs + '</td></tr>';
+  html += '<tr><th>Project</th><td>' + g('Project') + '</td></tr>';
+  html += '<tr><th>Light Source</th><td>' + g('Light Source') + '</td></tr>';
+  const url = g('URL');
+  if (url) html += '<tr><th>URL</th><td><a href="' + url + '" target="_blank" style="color:#702082;">' + url + '</a></td></tr>';
+  html += '</table>';
+
+  // Lab 量測值 table
+  const labRows = [
+    {key:'Customer', label:'Customer'},
+    {key:'WHQ', label:'WHQ'},
+    {key:'WZS', label:'WZS'},
+    {key:'FA', label:'Finish Applicator'}
+  ];
+  const labCols = ['L','a','b','Gloss','FT'];
+  const hasLab = labRows.some(r => labCols.some(c => g(r.key + '_' + c)));
+
+  // Standards Color / Gloss Units
+  const sc = g('Standards Color'), gu = g('Gloss Units');
+  if (hasLab || sc || gu) {
+    html += '<table class="cmf-lab-table" style="margin-top:12px;">';
+    if (sc) html += '<tr><td class="row-header" colspan="2" style="text-align:right;">Standards Color</td><td colspan="5" style="text-align:left;font-weight:700;color:#702082;">' + sc + '</td></tr>';
+    if (gu) html += '<tr><td class="row-header" colspan="2" style="text-align:right;">Gloss Units</td><td colspan="5" style="text-align:left;font-weight:700;color:#702082;">' + gu + '</td></tr>';
+    html += '<tr><th></th>';
+    labCols.forEach(c => { html += '<th>' + c + '</th>'; });
+    html += '</tr>';
+    labRows.forEach(r => {
+      html += '<tr><td class="row-header">' + r.label + '</td>';
+      labCols.forEach(c => {
+        const bKey = r.key + '_' + c;
+        const altKey = r.key === 'WZS' && c === 'b' ? 'WZS_B' : bKey;
+        html += '<td>' + (g(altKey) || g(bKey)) + '</td>';
+      });
+      html += '</tr>';
+    });
+    html += '</table>';
+  }
+
+  // 其他資訊
+  const usedKeys = new Set(['Brand','Customer Color Name_PN','Wstron Color_PN','Customer Color HEX','Wstron Color HEX',
+    'Material','Manufacturing Methods','Material SPEC/Apply to.','OEM Vendor','Finish Applicator','Material Supplier',
+    'Finish Supplier','Color Images','image','Sample images','URL','Project','Light Source',
+    'Standards Color','Gloss Units','Customer_L','Customer_a','Customer_b','Customer_E','Customer_Gloss','Customer_FT',
+    'WHQ_L','WHQ_a','WHQ_b','WHQ_E','WHQ_Gloss','WHQ_FT','WZS_L','WZS_a','WZS_b','WZS_B','WZS_E','WZS_Gloss','WZS_FT',
+    'FA_L','FA_a','FA_b','FA_E','FA_Gloss','FA_FT']);
+
+  let extraHtml = '';
+  const remark = g('Remark'), sf = g('Surface Finishing');
+  if (remark) extraHtml += '<tr><th>Remark</th><td>' + remark + '</td></tr>';
+  if (sf) extraHtml += '<tr><th>Surface Finishing</th><td>' + sf + '</td></tr>';
+  Object.entries(row).forEach(([k, v]) => {
+    if (!usedKeys.has(k) && k !== 'Remark' && k !== 'Surface Finishing' && v !== null && v !== '') {
+      extraHtml += '<tr><th>' + k + '</th><td>' + String(v).trim() + '</td></tr>';
+    }
+  });
+  if (extraHtml) {
+    html += '<div style="font-size:12px;font-weight:700;color:#702082;margin:16px 0 6px;">其他資訊</div>';
+    html += '<table class="cmf-detail-table">' + extraHtml + '</table>';
+  }
+
+  // 圖片
+  const imgs = [g('Color Images'), g('image'), g('Sample images')].filter(Boolean).join(',');
+  if (imgs) {
+    html += '<div style="font-size:11px;font-weight:700;color:#702082;text-transform:uppercase;margin:16px 0 6px;">Images</div>';
+    imgs.split(',').forEach(u => {
+      const trimmed = u.trim();
+      if (trimmed) html += '<a href="' + trimmed + '" target="_blank"><img src="' + trimmed + '" style="max-width:140px;max-height:140px;border-radius:4px;margin:4px;border:1px solid #eee;"></a>';
+    });
+  }
+
+  document.getElementById('cmf-detail-body').innerHTML = html;
+  document.getElementById('cmf-detail-modal').classList.add('open');
+}
+
+function closeCmfDetail() { document.getElementById('cmf-detail-modal').classList.remove('open'); }
+document.getElementById('cmf-detail-modal').addEventListener('click', e => { if (e.target===document.getElementById('cmf-detail-modal')) closeCmfDetail(); });
+
+
+
+// ── CMF 刪除 ──
+function deleteCmfRow(filteredIdx) {
+  if (!confirm('確定要刪除這筆資料嗎？')) return;
+  const row = cmfFiltered[filteredIdx];
+  const allIdx = cmfAllData.indexOf(row);
+  if (allIdx !== -1) cmfAllData.splice(allIdx, 1);
+  cmfFiltered.splice(filteredIdx, 1);
+  cmfPopulateFilters();
+  renderCmfTable(cmfFiltered);
+  showToast('✓ 已刪除');
+}
+
+// ── CMF 編輯 Modal ──
+const CMF_EDIT_FIELDS = [
+  'Brand','Customer Color Name_PN','Wstron Color_PN','Customer Color HEX','Wstron Color HEX',
+  'Material','Manufacturing Methods','Material SPEC/Apply to.','OEM Vendor',
+  'Finish Applicator','Finish Supplier','Material Supplier','Light Source',
+  'Project','URL','image','Color Images','Sample images',
+  'Standards Color','Gloss Units',
+  'Customer_L','Customer_a','Customer_b','Customer_Gloss','Customer_FT',
+  'WHQ_L','WHQ_a','WHQ_b','WHQ_Gloss','WHQ_FT',
+  'WZS_L','WZS_a','WZS_B','WZS_Gloss','WZS_FT','WZS_E',
+  'FA_L','FA_a','FA_b','FA_Gloss','FA_FT',
+  'Surface Finishing','Remark'
+];
+
+function openCmfEdit(filteredIdx) {
+  cmfEditIdx = filteredIdx;
+  const row = cmfFiltered[filteredIdx];
+  const allFields = new Set([...CMF_EDIT_FIELDS, ...Object.keys(row)]);
+  let html = '<table style="width:100%;border-collapse:collapse;">';
+  allFields.forEach(k => {
+    const val = (row[k] !== undefined && row[k] !== null) ? String(row[k]) : '';
+    const isColor = k.includes('HEX');
+    const swatchHtml = (isColor && val) ? '<span style="display:inline-block;width:16px;height:16px;background:' + val + ';border:1px solid #ccc;border-radius:3px;vertical-align:middle;margin-left:6px;"></span>' : '';
+    html += '<tr><td style="padding:5px 8px;font-size:11px;font-weight:700;color:#702082;text-align:right;white-space:nowrap;width:35%;">' + k + swatchHtml + '</td>' +
+      '<td style="padding:4px 8px;"><input id="cmf-edit-' + encodeURIComponent(k) + '" type="text" value="' + val.replace(/"/g,'&quot;') + '" ' +
+      'style="width:100%;padding:6px 8px;font-size:13px;border:1px solid #ddd;border-radius:6px;font-family:inherit;" ' +
+      'oninput="' + (isColor ? 'updateColorSwatch(this,\'' + encodeURIComponent(k) + '\')' : '') + '"></td></tr>';
+  });
+  html += '</table>';
+  document.getElementById('cmf-edit-body').innerHTML = html;
+  document.getElementById('cmf-edit-modal').classList.add('open');
+}
+
+function updateColorSwatch(input, encKey) {
+  const val = input.value.trim();
+  const k = decodeURIComponent(encKey);
+  const span = input.closest('td').previousElementSibling.querySelector('span');
+  if (span) span.style.background = val || 'transparent';
+}
+
+function closeCmfEdit() {
+  document.getElementById('cmf-edit-modal').classList.remove('open');
+  cmfEditIdx = -1;
+}
+
+function saveCmfEdit() {
+  if (cmfEditIdx < 0) return;
+  const row = cmfFiltered[cmfEditIdx];
+  const allFields = new Set([...CMF_EDIT_FIELDS, ...Object.keys(row)]);
+  allFields.forEach(k => {
+    const el = document.getElementById('cmf-edit-' + encodeURIComponent(k));
+    if (el) row[k] = el.value;
+  });
+  closeCmfEdit();
+  cmfPopulateFilters();
+  renderCmfTable(cmfFiltered);
+  showToast('✓ 修改已儲存');
+}
+
+document.getElementById('cmf-edit-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('cmf-edit-modal')) closeCmfEdit();
+});
+
+function cmfExport() {
+  if (!cmfFiltered.length) { showToast('沒有資料可匯出', true); return; }
+  const ws = XLSX.utils.json_to_sheet(cmfFiltered);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'CMF篩選結果');
+  XLSX.writeFile(wb, 'CMF_Filtered.xlsx');
+}
+
+// Enter 鍵觸發篩選
+document.getElementById('cmf-search').addEventListener('keypress', e => { if (e.key==='Enter') cmfApplyFilters(); });
+
+// ── 初始化 ──
+renderAbbr();
+// CMF 預載資料初始化
+cmfPopulateFilters();
+renderCmfTable(cmfFiltered);
+document.getElementById('cmf-filters').style.display = 'flex';
+document.getElementById('cmf-summary').style.display = 'flex';
+document.getElementById('cmf-export-btn').style.display = 'inline-flex';
 </script>
 </body>
 </html>
