@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wistron CMF Knowledge Base</title>
+<style>
+  :root{
+    --purple:#702082; --purple-dark:#4e1659; --purple-tint:#f7f2f9;
+    --ink:#1a1a1a; --muted:#6b6b70; --line:rgba(0,0,0,.09);
+    --bg:#f5f5f3; --card:#ffffff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px; line-height:1.5;
+  }
+  header{
+    position:sticky; top:0; z-index:20; background:var(--purple);
+    color:#fff; padding:14px 22px; display:flex; align-items:baseline; gap:14px;
+    box-shadow:0 1px 0 rgba(0,0,0,.15);
+  }
+  header h1{font-size:17px; margin:0; font-weight:650; letter-spacing:.02em}
+  header .sub{font-size:12px; opacity:.8}
+  .wrap{max-width:100%; padding:20px 22px 60px}
+  .toolbar{
+    display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+    margin-bottom:16px;
+  }
+  .toolbar input[type=text], .toolbar select{
+    font:inherit; padding:8px 11px; border:1px solid var(--line);
+    border-radius:9px; background:var(--card); color:var(--ink); min-width:130px;
+  }
+  .toolbar input[type=text]{min-width:230px}
+  .toolbar input[type=text]:focus, .toolbar select:focus{
+    outline:2px solid var(--purple); outline-offset:-1px; border-color:transparent;
+  }
+  .btn{
+    font:inherit; padding:8px 14px; border-radius:9px; border:1px solid var(--line);
+    background:var(--card); color:var(--ink); cursor:pointer;
+  }
+  .btn:hover{background:var(--purple-tint)}
+  .btn.primary{background:var(--purple); color:#fff; border-color:var(--purple)}
+  .btn.primary:hover{background:var(--purple-dark)}
+  .count{font-size:12px; color:var(--muted); margin-left:auto}
+  .tablewrap{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    overflow:auto; max-height:calc(100vh - 200px);
+  }
+  table{border-collapse:collapse; width:100%; min-width:1100px}
+  thead th{
+    position:sticky; top:0; background:var(--purple-tint); color:var(--purple-dark);
+    text-align:left; font-weight:600; font-size:12px; padding:10px 12px;
+    border-bottom:1px solid var(--line); white-space:nowrap; z-index:5;
+  }
+  tbody td{padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:middle}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:var(--purple-tint)}
+  .swatch{
+    display:inline-block; width:22px; height:22px; border-radius:5px;
+    border:1px solid rgba(0,0,0,.18); vertical-align:middle; margin-right:8px;
+    flex-shrink:0;
+  }
+  .pn{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; letter-spacing:-.01em}
+  .colorcell{display:flex; align-items:center; white-space:nowrap}
+  .tag{
+    display:inline-block; padding:2px 8px; border-radius:20px; font-size:11.5px;
+    background:var(--purple-tint); color:var(--purple-dark); white-space:nowrap;
+  }
+  .muted{color:var(--muted)}
+  .empty{padding:40px; text-align:center; color:var(--muted)}
+  /* Detail modal */
+  .overlay{
+    position:fixed; inset:0; background:rgba(20,10,25,.45); display:none;
+    align-items:flex-start; justify-content:center; z-index:50; padding:40px 16px;
+    overflow:auto;
+  }
+  .overlay.open{display:flex}
+  .modal{
+    background:var(--card); border-radius:14px; max-width:720px; width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.3); overflow:hidden;
+  }
+  .modal-head{
+    background:var(--purple); color:#fff; padding:18px 22px;
+    display:flex; align-items:center; gap:14px;
+  }
+  .modal-head .swatch{width:44px; height:44px; border-radius:8px; margin:0}
+  .modal-head .mtitle{font-size:16px; font-weight:650}
+  .modal-head .msub{font-size:12.5px; opacity:.85; font-family:ui-monospace,Menlo,monospace}
+  .modal-head .x;
+    margin-left:auto; background:rgba(255,255,255,.18); border:none; color:#fff;
+    width:32px; height:32px; border-radius:8px; font-size:18px; cursor:pointer;
+  }
+  .modal-head .x:hover{background:rgba(255,255,255,.32)}
+  .modal-body{padding:8px 22px 22px}
+  .section-label{
+    font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--purple);
+    font-weight:700; margin:18px 0 6px;
+  }
+  .kv{display:grid; grid-template-columns:150px 1fr; gap:2px 14px; font-size:13px}
+  .kv dt{color:var(--muted); padding:5px 0}
+  .kv dd{margin:0; padding:5px 0; word-break:break-word}
+  .labgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px}
+  .labcard{border:1px solid var(--line); border-radius:9px; padding:9px 11px}
+  .labcard .src{font-size:11px; color:var(--purple); font-weight:700; margin-bottom:3px}
+  .labcard .vals{font-size:12.5px; font-family:ui-monospace,Menlo,monospace}
+  @media (max-width:600px){
+    .kv{grid-template-columns:1fr}
+    .kv dt{padding-bottom:0}
+    .wrap{padding:14px}
+    header{padding:12px 14px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Wistron CMF Knowledge Base</h1>
+  <span class="sub">Color · Material · Finish</span>
+</header>
+
+<div class="wrap">
+  <div class="toolbar">
+    <input type="text" id="cmf-search" placeholder="搜尋色號、專案、客戶色名、供應商…">
+    <select id="cmf-f-brand"><option value="">全部客戶</option></select>
+    <select id="cmf-f-material"><option value="">全部材質</option></select>
+    <select id="cmf-f-method"><option value="">全部工法</option></select>
+    <button class="btn" id="cmf-reset">清除</button>
+    <span class="count" id="cmf-count"></span>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th>客戶</th><th>材質</th><th>專案</th>
+          <th>Wistron 色號</th><th>客戶色名</th>
+          <th>工法</th><th>底材 SPEC</th><th>供應商</th>
+        </tr>
+      </thead>
+      <tbody id="cmf-tbody"></tbody>
+    </table>
+  </div>
+  <div class="empty" id="cmf-empty" style="display:none">沒有符合條件的資料</div>
+</div>
+<div class="overlay" id="cmf-detail" onclick="if(event.target===this)closeDetail()">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="swatch" id="d-swatch"></span>
+      <div>
+        <div class="mtitle" id="d-title"></div>
+        <div class="msub" id="d-sub"></div>
+      </div>
+      <button class="x" onclick="closeDetail()" aria-label="關閉">×</button>
+    </div>
+    <div class="modal-body" id="cmf-detail-body"></div>
+  </div>
+</div>
+<script src="cmf-data.js"></script>
+<script>
+(function(){
+  var DATA = (window.CMF_DEFAULT||[]).map(function(r,i){r.__i=i;return r;});
+  var filtered = DATA.slice();
+
+  var $=function(id){return document.getElementById(id)};
+  var search=$('cmf-search'), fBrand=$('cmf-f-brand'), fMat=$('cmf-f-material'), fMethod=$('cmf-f-method');
+
+  function uniq(key){
+    var s={};
+    DATA.forEach(function(r){ var v=(r[key]||'').trim(); if(v) s[v]=1; });
+    return Object.keys(s).sort();
+  }
+  function fillSelect(sel,vals){
+    vals.forEach(function(v){
+      var o=document.createElement('option'); o.value=v; o.textContent=v; sel.appendChild(o);
+    });
+  }
+  fillSelect(fBrand, uniq('Brand'));
+  fillSelect(fMat, uniq('Material'));
+  fillSelect(fMethod, uniq('Manufacturing Methods'));
+
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function hex(r){var h=(r['Wstron Color HEX']||r['Customer Color HEX']||'').trim(); return /^#[0-9A-Fa-f]{6}$/.test(h)?h:''}
+
+  function apply(){
+    var q=search.value.trim().toLowerCase();
+    var b=fBrand.value, m=fMat.value, mm=fMethod.value;
+    filtered=DATA.filter(function(r){
+      if(b && (r['Brand']||'')!==b) return false;
+      if(m && (r['Material']||'')!==m) return false;
+      if(mm && (r['Manufacturing Methods']||'')!==mm) return false;
+      if(q){
+        var hay=[r['Wstron Color_PN'],r['Customer Color Name_PN'],r['Project'],
+          r['Material Supplier'],r['OEM Vendor'],r['Wstron Color HEX'],r['Remark']]
+          .join(' ').toLowerCase();
+        if(hay.indexOf(q)<0) return false;
+      }
+      return true;
+    });
+    render();
+  }
+
+  function render(){
+    var tb=$('cmf-tbody'); tb.innerHTML='';
+    filtered.forEach(function(r){
+      var tr=document.createElement('tr');
+      tr.onclick=function(){openDetail(r)};
+      var h=hex(r);
+      var sw=h?'<span class="swatch" style="background:'+h+'"></span>':'<span class="swatch" style="background:repeating-linear-gradient(45deg,#eee,#eee 4px,#fafafa 4px,#fafafa 8px)"></span>';
+      tr.innerHTML=
+        '<td>'+esc(r['Brand'])+'</td>'+
+        '<td><span class="tag">'+esc(r['Material'])+'</span></td>'+
+        '<td class="muted">'+esc(r['Project']||'—')+'</td>'+
+        '<td class="colorcell">'+sw+'<span class="pn">'+esc(r['Wstron Color_PN']||'—')+'</span></td>'+
+        '<td>'+esc(r['Customer Color Name_PN']||'—')+'</td>'+
+        '<td>'+esc(r['Manufacturing Methods']||'—')+'</td>'+
+        '<td class="muted">'+esc(r['Material SPEC/Apply to.']||'—')+'</td>'+
+        '<td class="muted">'+esc(r['Material Supplier']||r['OEM Vendor']||'—')+'</td>';
+      tb.appendChild(tr);
+    });
+    $('cmf-count').textContent=filtered.length+' / '+DATA.length+' 筆';
+    $('cmf-empty').style.display=filtered.length?'none':'block';
+  }
+
+  // ---- detail ----
+  var LAB_SOURCES=[
+    {p:'Customer_',label:'Customer'},{p:'WHQ_',label:'WHQ'},
+    {p:'WZS_',label:'WZS'},{p:'FA_',label:'FA'}
+  ];
+  function val(r,k){var v=r[k]; return (v===''||v==null)?'':v}
+  function labFor(r,pre){
+    var b = pre==='WZS_' ? (val(r,'WZS_B')!==''?val(r,'WZS_B'):val(r,'WZS_b')) : val(r,pre+'b');
+    var parts=[];
+    if(val(r,pre+'L')!=='') parts.push('L '+val(r,pre+'L'));
+    if(val(r,pre+'a')!=='') parts.push('a '+val(r,pre+'a'));
+    if(b!=='') parts.push('b '+b);
+    if(val(r,pre+'E')!=='') parts.push('ΔE '+val(r,pre+'E'));
+    if(val(r,pre+'Gloss')!=='') parts.push('Gloss '+val(r,pre+'Gloss'));
+    if(val(r,pre+'FT')!=='') parts.push('FT '+val(r,pre+'FT'));
+    return parts;
+  }
+
+  window.openDetail=function(r){
+    var h=hex(r);
+    $('d-swatch').style.background = h||'repeating-linear-gradient(45deg,#e6e6e6,#e6e6e6 5px,#f6f6f6 5px,#f6f6f6 10px)';
+    $('d-title').textContent = r['Customer Color Name_PN'] || r['Wstron Color_PN'] || '(未命名)';
+    $('d-sub').textContent = [r['Wstron Color_PN'],r['Wstron Color HEX']].filter(Boolean).join('  ·  ');
+
+    var body=$('cmf-detail-body');
+    var used={};
+    function row(label,key){
+      used[key]=1;
+      var v=r[key];
+      if(v===''||v==null) return '';
+      return '<dt>'+esc(label)+'</dt><dd>'+esc(v)+'</dd>';
+    }
+    var identity='<dl class="kv">'+
+      row('客戶 Brand','Brand')+row('材質 Material','Material')+
+      row('專案 Project','Project')+row('工法','Manufacturing Methods')+
+      row('底材 SPEC','Material SPEC/Apply to.')+row('表面處理','Surface Finishing')+
+      '</dl>';
+    var color='<dl class="kv">'+
+      row('Wistron 色號','Wstron Color_PN')+row('Wistron HEX','Wstron Color HEX')+
+      row('客戶色名/PN','Customer Color Name_PN')+row('客戶 HEX','Customer Color HEX')+
+      row('光源','Light Source')+row('標準色板','Standards Color')+row('光泤','Gloss Units')+
+      '</dl>';
+    var supply='<dl class="kv">'+
+      row('OEM Vendor','OEM Vendor')+row('材料供應商','Material Supplier')+
+      row('表面處理施作','Finish Applicator')+row('表面處理供應商','Finish Supplier')+
+      '</dl>';
+
+    LAB_SOURCES.forEach(function(s){
+      ['L','a','b','B','E','Gloss','FT'].forEach(function(x){used[s.p+x]=1});
+    });
+    var labCards='';
+    LAB_SOURCES.forEach(function(s){
+      var parts=labFor(r,s.p);
+      if(parts.length){
+        labCards+='<div class="labcard"><div class="src">'+s.label+'</div><div class="vals">'+esc(parts.join('  '))+'</div></div>';
+      }
+    });
+    var labSection = labCards ? '<div class="section-label">量測值 Lab / Gloss</div><div class="labgrid">'+labCards+'</div>' : '';
+
+    var others='';
+    used['__i']=1; used['image']=1; used['URL']=1;
+    var extra='';
+    if(r['Remark']) extra+='<dt>Remark</dt><dd>'+esc(r['Remark'])+'</dd>';
+    if(r['URL']) extra+='<dt>URL</dt><dd><a href="'+esc(r['URL'])+'" target="_blank" rel="noopener">'+esc(r['URL'])+'</a></dd>';
+    Object.keys(r).forEach(function(k){
+      if(used[k]) return;
+      var v=r[k]; if(v===''||v==null) return;
+      extra+='<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>';
+    });
+    if(extra) others='<div class="section-label">其他躇訊</div><dl class="kv">'+extra+'</dl>';
+
+    body.innerHTML=
+      '<div class="section-label">基本</div>'+identity+
+      '<div class="section-label">額色</div>'+color+
+      '<div class="section-label">供應商</div>'+supply+
+      labSection+others;
+
+    $('cmf-detail').classList.add('open');
+    document.body.style.overflow='hidden';
+  };
+  window.closeDetail=function(){
+    $('cmf-detail').classList.remove('open');
+    document.body.style.overflow='';
+  };
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeDetail()});
+
+  search.addEventListener('input',apply);
+  fBrand.addEventListener('change',apply);
+  fMat.addEventListener('change',apply);
+  fMethod.addEventListener('change',apply);
+  $('cmf-reset').addEventListener('click',function(){
+    search.value=''; fBrand.value=''; fMat.value=''; fMethod.value=''; apply();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
